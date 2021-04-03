@@ -16,6 +16,11 @@ use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
+/**
+ * Class RecipesController
+ *
+ * @package App\Controller
+ */
 class RecipesController extends AbstractController {
     // Status Codes
     const STATUS_OK = 200;
@@ -27,6 +32,7 @@ class RecipesController extends AbstractController {
     const VALIDATION_FAILED = "Validation failed.";
     const VALIDATION_NO_RECORD = "No record found.";
     const VALIDATION_STATION_PARAMS = "Invalid post parameters.";
+    const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q=";
 
     const CATEGORY_dessert = 'dessert';
     const CATEGORY_SALAD = 'salad';
@@ -110,31 +116,68 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * Get recipe.
+     * Get recipe with a condition.
      *
-     * @param string $name Recipe name
      * @param Request $request
      * @return Response
-     * @Route("recipes/api/name", methods={"GET"}, requirements={"name"="\w+"}, name="get_where")
+     * @Route("recipes/api/where", methods={"GET"}, requirements={"name"="\w+"}, name="get_where")
      */
     public function getWhere(Request $request): Response {
-//        $name = strtolower($name);
-//        $results = $this->recipesRepository->findByQuery(['name' => $name]);
-//        foreach($results as $key => $value) {
-//            $parsedIngredients = $this->parseIngredients($value->getIngredients());
-//            $value->setIngredients($parsedIngredients);
-//        }
-//        $this->validateResponse($results, $name);
-//        $this->updateResponseHeader();
-//        return $this->response;
+        $params = $request->query->all();
+        // TODO Validate Sent field
+        $params = array_change_key_case ($params, CASE_LOWER );
+        //$field = strtolower($field);
+        $results = $this->recipesRepository->findByQuery($params);
+        if (!empty($results)) {
+            foreach($results as $key => $value) {
+                $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
+                $value->setIngredients($parsedIngredients);
+            }
+        }
+        $this->validateResponse($results);
+        $this->updateResponseHeader();
+        return $this->response;
+    }
+
+    /**
+     * Right wildcard search for a recipe.
+     *
+     * @param Request $request
+     * @param string $keyword
+     * @return Response
+     * @Route("recipes/api/search", methods={"GET"}, requirements={"name"="\w+"}, name="get_search")
+     */
+    public function getSearch(Request $request): Response {
+        $query = $request->getQueryString();
+        $keyword = explode('=', $query);
+
+        if (isset($keyword[1])) {
+            // TODO Validate Sent field
+            //$keyword = strtolower($keyword);
+            $results = $this->recipesRepository->search($keyword[1]);
+            if (!empty($results)) {
+                foreach($results as $key => $value) {
+                    $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
+                    $value->setIngredients($parsedIngredients);
+                }
+            }
+            $this->validateResponse($results);
+            $this->updateResponseHeader();
+        } else {
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            $this->response->setContent(self::VALIDATION_INVALID_SEARCH_QUERY);
+        }
+
+        return $this->response;
     }
 
     /**
      * Parse ingredients into a usable array.
      *
      * @param $ingredients
+     * @return array
      */
-    private function normalizeIngredients(string $ingredients) {
+    private function normalizeIngredients(string $ingredients): array {
         // should be received as "ingredients": "100 g tomatoes,200 tps salt,500 g cheese",
         $ingredients = explode(',', $ingredients);
         $parsedArray = [];
@@ -152,11 +195,11 @@ class RecipesController extends AbstractController {
     /**
      * Validate API response.
      *
+     * @param array $result
      * @param string $recipeIdentifier
      */
-    private function validateResponse($result, $recipeIdentifier = '') {
+    private function validateResponse(array $result, $recipeIdentifier = '') {
         $responseJson = $this->serializer->serialize($result, 'json');
-
         if (empty($responseJson)) {
             $this->response->setStatusCode(self::STATUS_NO_CONTENT);
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
@@ -167,7 +210,7 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * Post weatherData.
+     * Post a recipe.
      *
      * @Route("recipes/api",  methods={"POST"}, name="post")
      * @param Request $request
@@ -219,6 +262,7 @@ class RecipesController extends AbstractController {
         $normalizedData['cooking_time'] = $normalizedData['cooking_time'] ?? null;
         $normalizedData['calories'] = $normalizedData['calories'] ?? null;
         $normalizedData['cuisine'] = $normalizedData['cuisine'] ?? '';
+        $normalizedData['url'] = $normalizedData['url'] ?? '';
         return $normalizedData;
     }
 
@@ -244,6 +288,7 @@ class RecipesController extends AbstractController {
      * Validate category.
      *
      * @param $category
+     * @return bool
      */
     private function validateCategory($category): bool {
         if (empty(self::$categories)) {

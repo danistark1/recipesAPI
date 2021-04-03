@@ -67,6 +67,41 @@ class RecipesRepository extends ServiceEntityRepository {
         return $recipeData;
     }
 
+    public function search($keyword) {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+
+        $results = $qb->select('re')
+            ->from(RecipesEntity::class, 're')
+            ->where($qb->expr()->like('re.name', ':name'))
+            ->orwhere($qb->expr()->like('re.directions', ':directions'))
+            ->orwhere($qb->expr()->like('re.category', ':category'))
+            ->orwhere($qb->expr()->like('re.cuisine', ':cuisine'))
+            ->orwhere($qb->expr()->like('re.ingredients', ':ingredients'))
+            ->setParameter('ingredients', $keyword . '%')
+            ->setParameter('cuisine', $keyword . '%')
+            ->setParameter('category', $keyword . '%')
+            ->setParameter('directions', $keyword . '%')
+            ->setParameter('name', $keyword . '%')
+            ->getQuery()
+            ->execute();
+        return $results;
+    }
+
+//$em = $this->getEntityManager();
+//$qb = $em->createQueryBuilder();
+//$field = $params['field'];
+//$value = $params['value'];
+//$operation = $params['operation'];
+//
+//$results  = $qb->select('p')
+//->from(SensorEntity::class, 'p')
+//->where('p.'.$field. $operation. ' :'.$field)
+//->setParameter($field, $value)
+//->getQuery()
+//->execute();
+//
+//return $results;
+
     // /**
     //  * @return RecipesEntity[] Returns an array of RecipesEntity objects
     //  */

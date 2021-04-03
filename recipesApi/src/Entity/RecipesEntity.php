@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\RecipesEntityRepository;
+use App\Repository\RecipesRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=RecipesEntityRepository::class)
+ * @ORM\Entity(repositoryClass=RecipesRepository::class)
  * @ORM\Table(name="recipesEntity")
  */
 class RecipesEntity
@@ -77,6 +77,11 @@ class RecipesEntity
      * @ORM\Column(type="text")
      */
     private $ingredients;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $url;
 
     public function getId(): ?int
     {
@@ -223,6 +228,18 @@ class RecipesEntity
     public function setIngredients($ingredients): self
     {
         $this->ingredients = $ingredients;
+
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(string $url): self
+    {
+        $this->url = $url;
 
         return $this;
     }
