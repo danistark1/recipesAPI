@@ -130,11 +130,32 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Delete a recipes.
+     *
+     * @Route("recipes/api/delete/{id}", methods={"DELETE"}, requirements={"id"="\d+"}, name="delete_recipe")
+     * @param $id
+     * @return Response
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function delete($id) {
+        $result = $this->recipesRepository->delete($id);
+        if (!$result) {
+            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+        } else {
+            $this->response->setStatusCode(self::STATUS_OK);
+        }
+        $this->updateResponseHeader();
+        return $this->response;
+
+    }
+
+    /**
      * Get recipe with a condition.
      *
      * @param Request $request
      * @return Response
-     * @Route("recipes/api/where", methods={"GET"}, requirements={"name"="\w+"}, name="get_where")
+     * @Route("recipes/api/where", methods={"GET"}, name="get_where")
      */
     public function getWhere(Request $request): Response {
         $params = $request->query->all();

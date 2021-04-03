@@ -56,6 +56,34 @@ class RecipesRepository extends ServiceEntityRepository {
     }
 
     /**
+     * Delete a record.
+     *
+     * @param int $id
+     * @throws ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function delete(int $id) {
+
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+
+        $result = $qb->select('p')
+            ->from(RecipesEntity::class, 'p')
+            ->where('p.'.'id'. '= :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->execute();
+        if (!empty($result) && isset($result[0])) {
+            $em->remove($result[0]);
+            $em->flush();
+            $deleted = true;
+        } else {
+            $deleted = false;
+        }
+        return $deleted;
+    }
+
+    /**
      * Find a record.
      *
      * @param array $params
