@@ -49,7 +49,7 @@ class RecipesEntity
     private $directions;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="string")
      */
     private $insert_date_time;
 
@@ -160,12 +160,12 @@ class RecipesEntity
         return $this;
     }
 
-    public function getInsertDateTime(): ?\DateTimeInterface
+    public function getInsertDateTime(): ?string
     {
         return $this->insert_date_time;
     }
 
-    public function setInsertDateTime(\DateTimeInterface $insert_date_time): self
+    public function setInsertDateTime(string $insert_date_time): self
     {
         $this->insert_date_time = $insert_date_time;
 

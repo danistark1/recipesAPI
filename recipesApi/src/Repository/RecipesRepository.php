@@ -21,7 +21,6 @@ class RecipesRepository extends ServiceEntityRepository {
     }
 
 
-
     /**
      * Save Recipe record to the database.
      *
@@ -29,15 +28,16 @@ class RecipesRepository extends ServiceEntityRepository {
      * @return bool True is operation is successful, false otherwise.
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
+     * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function save(array $params) {
+    public function save(array $params): bool {
         $em = $this->getEntityManager();
         $recipesEntity = new RecipesEntity();
         $recipesEntity->setName($params['name']);
         $recipesEntity->setCategory($params['category']);
         $recipesEntity->setDirections($params['directions']);
         $recipesEntity->setIngredients($params['ingredients']);
-        $dt = RecipiesDateTime::dateNow();
+        $dt = RecipiesDateTime::dateNow('', true);
         $recipesEntity->setInsertDateTime($dt);
         $recipesEntity->setFavourites($params['favourites']);
         $recipesEntity->setAddedBy($params['added_by']);
@@ -45,15 +45,14 @@ class RecipesRepository extends ServiceEntityRepository {
         $recipesEntity->setCookingTime($params['cooking_time']);
         $recipesEntity->setCalories($params['calories']);
         $recipesEntity->setCuisine($params['cuisine']);
-        $result = true;
         try {
             $em->persist($recipesEntity);
         } catch (ORMInvalidArgumentException | ORMException $e) {
-            $result = false;
             //$this->logger->log('test', [], Logger::CRITICAL);
         }
         $em->flush();
-        return $result;
+        $id = $recipesEntity->getId();
+        return $id;
     }
 
     /**

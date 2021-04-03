@@ -116,6 +116,20 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Get recipe by id internally.
+     *
+     * @param $id
+     */
+    private function getByIdInternal($id) {
+        $results = $this->recipesRepository->findByQuery(['id' => $id]);
+        foreach($results as $key => $value) {
+            $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
+            $value->setIngredients($parsedIngredients);
+        }
+        $this->validateResponse($results, $id);
+    }
+
+    /**
      * Get recipe with a condition.
      *
      * @param Request $request
@@ -227,8 +241,11 @@ class RecipesController extends AbstractController {
             $valid = $this->validatePost($parameters, __CLASS__.__FUNCTION__);
         }
         if ($valid) {
-            $result = $this->recipesRepository->save($parameters);
-                $this->response->setStatusCode(self::STATUS_OK);
+            $recipeID = $this->recipesRepository->save($parameters);
+            $this->response->setStatusCode(self::STATUS_OK);
+            // Return posted data back.(use get to normalize ingredients array).
+            $this->getByIdInternal($recipeID);
+            //$this->response->setContent($getResult);
             } else {
                 $this->response->setStatusCode(self::STATUS_EXCEPTION);
             }
