@@ -178,11 +178,12 @@ class RecipesController extends AbstractController {
             empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
             empty($data['cuisine']) ? true : $recipe->setCookingTime($data['cooking_time']);
             empty($data['url']) ? true : $recipe->setCookingTime($data['url']);
+            $validFields = $this->validateRecipeFields($data);
             $valid = true;
             if (!empty($data['category'])) {
                 $valid = $this->validateCategory($data['category']);
             }
-            if ($valid) {
+            if ($valid && $validFields) {
                 $updatedRecipe = $this->recipesRepository->updateRecipe($recipe);
                 if ($updatedRecipe instanceof RecipesEntity) {
                     $this->getByIdInternal($id);
