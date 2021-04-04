@@ -160,7 +160,7 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function patch($id, Request $request): Response {
+    public function put($id, Request $request): Response {
         // Update Fields.
         //name, prep_time, cooking_time, category, directions, ingredients, favourites, calories, cuisine, url
 
@@ -306,9 +306,9 @@ class RecipesController extends AbstractController {
         // turn request data into an array
         $parameters = json_decode($request->getContent(), true);
         $parameters = $this->normalizeData($parameters);
-
+        $validPostFields = $this->validateRecipeFields($parameters);
         $valid = false;
-        if ($parameters && is_array($parameters)) {
+        if ($parameters && is_array($parameters) && $validPostFields) {
             $valid = $this->validatePost($parameters, __CLASS__.__FUNCTION__);
         }
         if ($valid) {
@@ -317,12 +317,29 @@ class RecipesController extends AbstractController {
             // Return posted data back.(use get to normalize ingredients array).
             $this->getByIdInternal($recipeID);
             } else {
-                $this->response->setStatusCode(self::STATUS_EXCEPTION);
+                $this->response->setStatusCode(self::VALIDATION_FAILED);
             }
         $this->updateResponseHeader();
         return $this->response;
     }
 
+    /**
+     * Validate recipe fields.
+     *
+     * @param array $params
+     * @return bool
+     */
+    private function validateRecipeFields(array $params): bool {
+        $valid = true;
+        foreach($params as $key => $value) {
+            if (!in_array($key, $this->recipesRepository->getValidFields())) {
+                $this->logger->log(self::VALIDATION_FAILED, ['field' => $key], self::STATUS_VALIDATION_FAILED);
+                $valid = false;
+                break;
+            }
+        }
+        return $valid;
+    }
 
     /**
      * Adds execution time to the response.
