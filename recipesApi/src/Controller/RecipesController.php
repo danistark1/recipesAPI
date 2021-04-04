@@ -86,13 +86,15 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * @Route("/recipies", name="recipies")
+     * Get all recipes.
+     * 
+     * @Route("/recipes", name="get_all_recipies")
      */
     public function index(): Response {
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/RecipiesController.php',
-        ]);
+        //TODO Paginate.
+        $result = $this->recipesRepository->findAll();
+        $this->validateResponse($result);
+        return $this->response;
     }
 
     /**
@@ -209,18 +211,21 @@ class RecipesController extends AbstractController {
      */
     public function getWhere(Request $request): Response {
         $params = $request->query->all();
-        // TODO Validate Sent field
         $params = array_change_key_case ($params, CASE_LOWER );
-        //$field = strtolower($field);
-        $results = $this->recipesRepository->findByQuery($params);
-        if (!empty($results)) {
-            foreach($results as $key => $value) {
-                $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
-                $value->setIngredients($parsedIngredients);
+        $valid = $this->validateRecipeFields($params);
+        if ($valid) {
+            $results = $this->recipesRepository->findByQuery($params);
+            if (!empty($results)) {
+                foreach($results as $key => $value) {
+                    $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
+                    $value->setIngredients($parsedIngredients);
+                }
             }
+            $this->validateResponse($results);
+            $this->updateResponseHeader();
+        } else {
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
         }
-        $this->validateResponse($results);
-        $this->updateResponseHeader();
         return $this->response;
     }
 
@@ -308,7 +313,7 @@ class RecipesController extends AbstractController {
         $validPostFields = $this->validateRecipeFields($parameters);
         $valid = false;
         if ($parameters && is_array($parameters) && $validPostFields) {
-            $valid = $this->validatePost($parameters, __CLASS__.__FUNCTION__);
+            $valid = $this->validateRequiredFields($parameters, __CLASS__.__FUNCTION__);
         }
         if ($valid) {
             $recipeID = $this->recipesRepository->save($parameters);
@@ -377,7 +382,7 @@ class RecipesController extends AbstractController {
      * @param $sender
      * @return bool
      */
-    private function validatePost(array $parameters, $sender): bool {
+    private function validateRequiredFields(array $parameters, $sender): bool {
         $valid = isset($parameters['name']) && (isset($parameters['category']) && $this->validateCategory($parameters['category'])) && isset($parameters['directions']) && isset($parameters['ingredients']);
         if (!$valid) {
             $this->response->setContent(self::VALIDATION_FAILED);
@@ -398,7 +403,6 @@ class RecipesController extends AbstractController {
         if (empty(self::$categories)) {
             self::$categories = [self::CATEGORY_dessert, self::CATEGORY_SALAD, self::CATEGORY_MAIN_DISH];
         }
-        $valid = in_array($category, self::$categories);
-        return $valid;
+        return in_array($category, self::$categories);
     }
 }

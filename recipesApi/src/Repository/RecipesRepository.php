@@ -17,11 +17,15 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class RecipesRepository extends ServiceEntityRepository {
 
-
     private const VALID_FIELDS = [
         'name', 'prep_time', 'cooking_time','ingredients', 'servings', 'category', 'directions', 'favourites',
         'added_by', 'calories', 'cuisine', 'url'];
 
+    /**
+     * RecipesRepository constructor.
+     *
+     * @param ManagerRegistry $registry
+     */
     public function __construct(ManagerRegistry $registry) {
         parent::__construct($registry, RecipesEntity::class);
     }
@@ -146,24 +150,6 @@ class RecipesRepository extends ServiceEntityRepository {
         return self::VALID_FIELDS;
     }
 
-//$em = $this->getEntityManager();
-//$qb = $em->createQueryBuilder();
-//$field = $params['field'];
-//$value = $params['value'];
-//$operation = $params['operation'];
-//
-//$results  = $qb->select('p')
-//->from(SensorEntity::class, 'p')
-//->where('p.'.$field. $operation. ' :'.$field)
-//->setParameter($field, $value)
-//->getQuery()
-//->execute();
-//
-//return $results;
-
-    // /**
-    //  * @return RecipesEntity[] Returns an array of RecipesEntity objects
-    //  */
     /*
     public function findByExampleField($value)
     {
