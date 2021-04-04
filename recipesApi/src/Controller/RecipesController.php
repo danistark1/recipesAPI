@@ -237,8 +237,6 @@ class RecipesController extends AbstractController {
         $keyword = explode('=', $query);
 
         if (isset($keyword[1])) {
-            // TODO Validate Sent field
-            //$keyword = strtolower($keyword);
             $results = $this->recipesRepository->search($keyword[1]);
             if (!empty($results)) {
                 foreach($results as $key => $value) {
