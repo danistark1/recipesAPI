@@ -151,6 +151,55 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Update a recipe.
+     *
+     * @Route("recipes/api/update/{id}", methods={"PUT"}, name="update_recipe")
+     * @param $id
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function patch($id, Request $request): Response {
+        // Update Fields.
+        //name, prep_time, cooking_time, category, directions, ingredients, favourites, calories, cuisine, url
+
+        $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
+        if (!empty($recipe)) {
+            $data = json_decode($request->getContent(), true);
+            $data = $this->normalizeData($data);
+            empty($data['name']) ? true : $recipe->setName($data['name']);
+            empty($data['prep_time']) ? true : $recipe->setPrepTime($data['prep_time']);
+            empty($data['cooking_time']) ? true : $recipe->setCookingTime($data['cooking_time']);
+            empty($data['category']) ? true : $recipe->setCategory($data['category']);
+            empty($data['directions']) ? true : $recipe->setDirections($data['directions']);
+            empty($data['ingredients']) ? true : $recipe->setIngredients($data['ingredients']);
+            empty($data['favourites']) ? true : $recipe->setFavourites($data['favourites']);
+            empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
+            empty($data['cuisine']) ? true : $recipe->setCookingTime($data['cooking_time']);
+            empty($data['url']) ? true : $recipe->setCookingTime($data['url']);
+            $valid = true;
+            if (!empty($data['category'])) {
+                $valid = $this->validateCategory($data['category']);
+            }
+            if ($valid) {
+                $updatedRecipe = $this->recipesRepository->updateRecipe($recipe);
+                if ($updatedRecipe instanceof RecipesEntity) {
+                    $this->getByIdInternal($id);
+                } else {
+                    $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+                }
+            } else {
+                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            }
+
+        } else {
+            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+        }
+        return $this->response;
+    }
+
+    /**
      * Get recipe with a condition.
      *
      * @param Request $request
@@ -251,6 +300,7 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @return Response
      * @throws Exception
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function post(Request $request): Response {
         // turn request data into an array
@@ -266,13 +316,13 @@ class RecipesController extends AbstractController {
             $this->response->setStatusCode(self::STATUS_OK);
             // Return posted data back.(use get to normalize ingredients array).
             $this->getByIdInternal($recipeID);
-            //$this->response->setContent($getResult);
             } else {
                 $this->response->setStatusCode(self::STATUS_EXCEPTION);
             }
         $this->updateResponseHeader();
         return $this->response;
     }
+
 
     /**
      * Adds execution time to the response.

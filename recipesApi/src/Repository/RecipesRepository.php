@@ -25,12 +25,12 @@ class RecipesRepository extends ServiceEntityRepository {
      * Save Recipe record to the database.
      *
      * @param array $params Post data.
-     * @return bool True is operation is successful, false otherwise.
+     * @return integer $id is operation is successful, false otherwise.
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function save(array $params): bool {
+    public function save(array $params) {
         $em = $this->getEntityManager();
         $recipesEntity = new RecipesEntity();
         $recipesEntity->setName($params['name']);
@@ -51,9 +51,26 @@ class RecipesRepository extends ServiceEntityRepository {
             //$this->logger->log('test', [], Logger::CRITICAL);
         }
         $em->flush();
+
         $id = $recipesEntity->getId();
         return $id;
     }
+
+    /**
+     * Update a recipe.
+     *
+     * @param $recipe
+     * @return mixed
+     * @throws ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function updateRecipe($recipe) {
+        $em = $this->getEntityManager();
+        $em->persist($recipe);
+        $em->flush();
+        return $recipe;
+    }
+
 
     /**
      * Delete a record.
