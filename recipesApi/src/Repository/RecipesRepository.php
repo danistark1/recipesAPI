@@ -16,6 +16,12 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method RecipesEntity[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class RecipesRepository extends ServiceEntityRepository {
+
+
+    private const VALID_FIELDS = [
+        'name', 'prep_time', 'cooking_time','ingredients', 'servings', 'category', 'directions', 'favourites',
+        'added_by', 'calories', 'cuisine', 'url'];
+
     public function __construct(ManagerRegistry $registry) {
         parent::__construct($registry, RecipesEntity::class);
     }
@@ -25,12 +31,12 @@ class RecipesRepository extends ServiceEntityRepository {
      * Save Recipe record to the database.
      *
      * @param array $params Post data.
-     * @return bool True is operation is successful, false otherwise.
+     * @return integer $id is operation is successful, false otherwise.
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function save(array $params): bool {
+    public function save(array $params) {
         $em = $this->getEntityManager();
         $recipesEntity = new RecipesEntity();
         $recipesEntity->setName($params['name']);
@@ -51,8 +57,53 @@ class RecipesRepository extends ServiceEntityRepository {
             //$this->logger->log('test', [], Logger::CRITICAL);
         }
         $em->flush();
+
         $id = $recipesEntity->getId();
         return $id;
+    }
+
+    /**
+     * Update a recipe.
+     *
+     * @param $recipe
+     * @return mixed
+     * @throws ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function updateRecipe($recipe) {
+        $em = $this->getEntityManager();
+        $em->persist($recipe);
+        $em->flush();
+        return $recipe;
+    }
+
+
+    /**
+     * Delete a record.
+     *
+     * @param int $id
+     * @throws ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function delete(int $id) {
+
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+
+        $result = $qb->select('p')
+            ->from(RecipesEntity::class, 'p')
+            ->where('p.'.'id'. '= :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->execute();
+        if (!empty($result) && isset($result[0])) {
+            $em->remove($result[0]);
+            $em->flush();
+            $deleted = true;
+        } else {
+            $deleted = false;
+        }
+        return $deleted;
     }
 
     /**
@@ -84,6 +135,15 @@ class RecipesRepository extends ServiceEntityRepository {
             ->getQuery()
             ->execute();
         return $results;
+    }
+
+    /**
+     * Return valid recipe fields.
+     *
+     * @return string[]
+     */
+    public function getValidFields(): array {
+        return self::VALID_FIELDS;
     }
 
 //$em = $this->getEntityManager();

@@ -9,8 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity(repositoryClass=RecipesRepository::class)
  * @ORM\Table(name="recipesEntity")
  */
-class RecipesEntity
-{
+class RecipesEntity {
+
     /**
      * @ORM\Id
      * @ORM\GeneratedValue
@@ -243,4 +243,6 @@ class RecipesEntity
 
         return $this;
     }
+
+
 }
