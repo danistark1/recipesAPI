@@ -92,8 +92,9 @@ class RecipesController extends AbstractController {
      */
     public function index(): Response {
         //TODO Paginate.
-        $result = $this->recipesRepository->findAll();
-        $this->validateResponse($result);
+        $results = $this->recipesRepository->findAll();
+        $this->normalize($results);
+        $this->validateResponse($results);
         return $this->response;
     }
 
@@ -108,13 +109,24 @@ class RecipesController extends AbstractController {
     public function getByName(string $name): Response {
         $name = strtolower($name);
         $results = $this->recipesRepository->findByQuery(['name' => $name]);
-        foreach($results as $key => $value) {
-            $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
-            $value->setIngredients($parsedIngredients);
-        }
+        $this->normalize($results);
         $this->validateResponse($results, $name);
         $this->updateResponseHeader();
         return $this->response;
+    }
+
+    /**
+     * Normalize ingredients & directions.
+     *
+     * @param array $results
+     */
+    private function normalize(array &$results) {
+        foreach($results as $result) {
+            $parsedIngredients = $this->normalizeIngredients($result->getIngredients());
+            $parsedDirections = $this->normalizeDirections($result->getDirections());
+            $result->setIngredients($parsedIngredients);
+            $result->setDirections($parsedDirections);
+        }
     }
 
     /**
@@ -124,10 +136,7 @@ class RecipesController extends AbstractController {
      */
     private function getByIdInternal($id) {
         $results = $this->recipesRepository->findByQuery(['id' => $id]);
-        foreach($results as $key => $value) {
-            $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
-            $value->setIngredients($parsedIngredients);
-        }
+        $this->normalize($results);
         $this->validateResponse($results, $id);
     }
 
@@ -216,10 +225,7 @@ class RecipesController extends AbstractController {
         if ($valid) {
             $results = $this->recipesRepository->findByQuery($params);
             if (!empty($results)) {
-                foreach($results as $key => $value) {
-                    $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
-                    $value->setIngredients($parsedIngredients);
-                }
+                $this->normalize($results);
             }
             $this->validateResponse($results);
             $this->updateResponseHeader();
@@ -244,10 +250,7 @@ class RecipesController extends AbstractController {
         if (isset($keyword[1])) {
             $results = $this->recipesRepository->search($keyword[1]);
             if (!empty($results)) {
-                foreach($results as $key => $value) {
-                    $parsedIngredients = $this->normalizeIngredients($value->getIngredients());
-                    $value->setIngredients($parsedIngredients);
-                }
+                $this->normalize($results);
             }
             $this->validateResponse($results);
             $this->updateResponseHeader();
@@ -276,6 +279,25 @@ class RecipesController extends AbstractController {
                 'unit' => $parsed[1],
                 'ingredient' => $parsed[2]
             ];
+        }
+        return $parsedArray;
+    }
+
+    /**
+     * Parse directions into a usable array.
+     *
+     * @param string $directions
+     * @return array
+     */
+    private function normalizeDirections(string $directions): array {
+        // Make sure the string doesn't start and end with '#'.
+        $directions = rtrim(ltrim($directions, '#'), '#');
+        // should be received as "place in oven#mix with water"
+        $directions = explode('#', $directions);
+        $parsedArray = [];
+        foreach($directions as $direction) {
+            $parsedArray[] =
+                 trim($direction);
         }
         return $parsedArray;
     }

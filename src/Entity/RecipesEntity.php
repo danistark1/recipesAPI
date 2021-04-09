@@ -148,12 +148,12 @@ class RecipesEntity {
         return $this;
     }
 
-    public function getDirections(): ?string
+    public function getDirections()
     {
         return $this->directions;
     }
 
-    public function setDirections(string $directions): self
+    public function setDirections($directions): self
     {
         $this->directions = $directions;
 
