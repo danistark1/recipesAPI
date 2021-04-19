@@ -24,12 +24,12 @@ class RecipesEntity {
     private $name;
 
     /**
-     * @ORM\Column(type="time", nullable=true)
+     * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $prep_time;
 
     /**
-     * @ORM\Column(type="time", nullable=true)
+     * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $cooking_time;
 
@@ -100,24 +100,24 @@ class RecipesEntity {
         return $this;
     }
 
-    public function getPrepTime(): ?\DateTimeInterface
+    public function getPrepTime(): ?string
     {
         return $this->prep_time;
     }
 
-    public function setPrepTime(?\DateTimeInterface $prep_time): self
+    public function setPrepTime(?string $prep_time): self
     {
         $this->prep_time = $prep_time;
 
         return $this;
     }
 
-    public function getCookingTime(): ?\DateTimeInterface
+    public function getCookingTime(): ?string
     {
         return $this->cooking_time;
     }
 
-    public function setCookingTime(?\DateTimeInterface $cooking_time): self
+    public function setCookingTime(?string $cooking_time): self
     {
         $this->cooking_time = $cooking_time;
 
