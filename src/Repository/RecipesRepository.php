@@ -16,10 +16,23 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method RecipesEntity[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class RecipesRepository extends ServiceEntityRepository {
-
+    /**
+     * Valid recipe fields.
+     */
     private const VALID_FIELDS = [
-        'name', 'prep_time', 'cooking_time','ingredients', 'servings', 'category', 'directions', 'favourites',
-        'added_by', 'calories', 'cuisine', 'url'];
+        'name',
+        'prep_time',
+        'cooking_time',
+        'ingredients',
+        'servings',
+        'category',
+        'directions',
+        'favourites',
+        'added_by',
+        'calories',
+        'cuisine',
+        'url'
+    ];
 
     /**
      * RecipesRepository constructor.

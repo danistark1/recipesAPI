@@ -36,7 +36,8 @@ class RecipesController extends AbstractController {
 
     const CATEGORY_dessert = 'dessert';
     const CATEGORY_SALAD = 'salad';
-    const CATEGORY_MAIN_DISH = 'main_dish';
+    const CATEGORY_MAIN_DISH = 'main dish';
+    const CATEGORY_BREAKFAST = 'breakfast';
 
     public static $categories = [];
 
@@ -326,7 +327,6 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @return Response
      * @throws Exception
-     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function post(Request $request): Response {
         // turn request data into an array
@@ -422,6 +422,7 @@ class RecipesController extends AbstractController {
      * @return bool
      */
     private function validateCategory($category): bool {
+        $category = strtolower($category);
         if (empty(self::$categories)) {
             self::$categories = [self::CATEGORY_dessert, self::CATEGORY_SALAD, self::CATEGORY_MAIN_DISH];
         }
