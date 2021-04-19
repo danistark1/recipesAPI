@@ -343,7 +343,7 @@ class RecipesController extends AbstractController {
             // Return posted data back.(use get to normalize ingredients array).
             $this->getByIdInternal($recipeID);
             } else {
-                $this->response->setStatusCode(self::VALIDATION_FAILED);
+                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             }
         $this->updateResponseHeader();
         return $this->response;
