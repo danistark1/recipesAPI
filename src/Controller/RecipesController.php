@@ -238,17 +238,20 @@ class RecipesController extends AbstractController {
 
     /**
      * Right wildcard search for a recipe.
+     * Ex. - GET /recipes/api/search?q=pizza
+     *     - GET /recipes/api/search?q=main dish
      *
      * @param Request $request
      * @param string $keyword
      * @return Response
-     * @Route("recipes/api/search", methods={"GET"}, requirements={"name"="\w+"}, name="get_search")
+     * @Route("recipes/api/search", methods={"GET"}, name="get_search")
      */
     public function getSearch(Request $request): Response {
         $query = $request->getQueryString();
         $keyword = explode('=', $query);
-
+        $result = str_replace('%20',' ', $keyword[1]);
         if (isset($keyword[1])) {
+            $keyword[1]= $result;
             $results = $this->recipesRepository->search($keyword[1]);
             if (!empty($results)) {
                 $this->normalize($results);
@@ -424,7 +427,7 @@ class RecipesController extends AbstractController {
     private function validateCategory($category): bool {
         $category = strtolower($category);
         if (empty(self::$categories)) {
-            self::$categories = [self::CATEGORY_dessert, self::CATEGORY_SALAD, self::CATEGORY_MAIN_DISH];
+            self::$categories = [self::CATEGORY_BREAKFAST, self::CATEGORY_dessert, self::CATEGORY_SALAD, self::CATEGORY_MAIN_DISH];
         }
         return in_array($category, self::$categories);
     }
