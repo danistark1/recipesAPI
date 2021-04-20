@@ -105,7 +105,7 @@ class RecipesController extends AbstractController {
      * @param string $name Recipe name
      * @param Request $request
      * @return Response
-     * @Route("recipes/api/name/{name}", methods={"GET"}, requirements={"name"="\w+"}, name="get_by_name")
+     * @Route("recipes/api/name/{name}", methods={"GET"}, name="get_by_name")
      */
     public function getByName(string $name): Response {
         $name = strtolower($name);
