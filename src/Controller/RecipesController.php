@@ -105,7 +105,7 @@ class RecipesController extends AbstractController {
      * @param string $name Recipe name
      * @param Request $request
      * @return Response
-     * @Route("recipes/api/name/{name}", methods={"GET"}, name="get_by_name")
+     * @Route("recipes/name/{name}", methods={"GET"}, name="get_by_name")
      */
     public function getByName(string $name): Response {
         $name = strtolower($name);
@@ -144,7 +144,7 @@ class RecipesController extends AbstractController {
     /**
      * Delete a recipes.
      *
-     * @Route("recipes/api/delete/{id}", methods={"DELETE"}, requirements={"id"="\d+"}, name="delete_recipe")
+     * @Route("recipes/delete/{id}", methods={"DELETE"}, requirements={"id"="\d+"}, name="delete_recipe")
      * @param $id
      * @return Response
      * @throws \Doctrine\ORM\ORMException
@@ -165,7 +165,7 @@ class RecipesController extends AbstractController {
     /**
      * Update a recipe.
      *
-     * @Route("recipes/api/update/{id}", methods={"PUT"}, name="update_recipe")
+     * @Route("recipes/update/{id}", methods={"PUT"}, name="update_recipe")
      * @param $id
      * @param Request $request
      * @return Response
@@ -219,7 +219,7 @@ class RecipesController extends AbstractController {
      *
      * @param Request $request
      * @return Response
-     * @Route("recipes/api/where", methods={"GET"}, name="get_where")
+     * @Route("recipes/where", methods={"GET"}, name="get_where")
      */
     public function getWhere(Request $request): Response {
         $params = $request->query->all();
@@ -246,7 +246,7 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @param string $keyword
      * @return Response
-     * @Route("recipes/api/search", methods={"GET"}, name="get_search")
+     * @Route("recipes/search", methods={"GET"}, name="get_search")
      */
     public function getSearch(Request $request): Response {
         $query = $request->getQueryString();
@@ -311,7 +311,7 @@ class RecipesController extends AbstractController {
     /**
      * Post a recipe.
      *
-     * @Route("recipes/api",  methods={"POST"}, name="post")
+     * @Route("recipes",  methods={"POST"}, name="post")
      * @param Request $request
      * @return Response
      * @throws Exception
