@@ -123,8 +123,8 @@ class RecipesController extends AbstractController {
      */
     private function normalize(array &$results) {
         foreach($results as $result) {
-            $parsedIngredients = $this->normalizeIngredients($result->getIngredients());
-            $parsedDirections = $this->normalizeDirections($result->getDirections());
+            $parsedIngredients = $this->parseArray($result->getIngredients());
+            $parsedDirections = $this->parseArray($result->getDirections());
             $result->setIngredients($parsedIngredients);
             $result->setDirections($parsedDirections);
         }
@@ -153,7 +153,7 @@ class RecipesController extends AbstractController {
     public function delete($id) {
         $result = $this->recipesRepository->delete($id);
         if (!$result) {
-            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
         } else {
             $this->response->setStatusCode(self::STATUS_OK);
         }
@@ -201,13 +201,15 @@ class RecipesController extends AbstractController {
                     $this->getByIdInternal($id);
                 } else {
                     $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+                    $this->logger->log(self::VALIDATION_FAILED, ['fields' => $updatedRecipe], Logger::ALERT);
                 }
             } else {
                 $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+                $this->logger->log(self::VALIDATION_FAILED, ['fields' => $data], Logger::ALERT);
             }
 
         } else {
-            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
         }
         return $this->response;
     }
@@ -248,8 +250,12 @@ class RecipesController extends AbstractController {
      */
     public function getSearch(Request $request): Response {
         $query = $request->getQueryString();
+        dump($query);
         $keyword = explode('=', $query);
         $result = str_replace('%20',' ', $keyword[1]);
+        $filter = array_search('filter', $keyword);
+        dump($filter);
+        dump($keyword);
         if (isset($keyword[1])) {
             $keyword[1]= $result;
             $results = $this->recipesRepository->search($keyword[1]);
@@ -262,46 +268,24 @@ class RecipesController extends AbstractController {
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $this->response->setContent(self::VALIDATION_INVALID_SEARCH_QUERY);
         }
-
         return $this->response;
     }
 
     /**
-     * Parse ingredients into a usable array.
+     * Parse string into a usable array.
      *
-     * @param $ingredients
+     * @param string $data
      * @return array
      */
-    private function normalizeIngredients(string $ingredients): array {
-        // should be received as "ingredients": "100 g tomatoes,200 tps salt,500 g cheese",
-        $ingredients = explode(',', $ingredients);
-        $parsedArray = [];
-        foreach($ingredients as $ingredient) {
-            $parsed = explode(' ', $ingredient);
-            $parsedArray[] = [
-                'quantity' => $parsed[0],
-                'unit' => $parsed[1],
-                'ingredient' => $parsed[2]
-            ];
-        }
-        return $parsedArray;
-    }
-
-    /**
-     * Parse directions into a usable array.
-     *
-     * @param string $directions
-     * @return array
-     */
-    private function normalizeDirections(string $directions): array {
+    private function parseArray(string $data, $seperator = '#'): array {
         // Make sure the string doesn't start and end with '#'.
-        $directions = rtrim(ltrim($directions, '#'), '#');
+        $data = rtrim(ltrim($data, $seperator), $seperator);
         // should be received as "place in oven#mix with water"
-        $directions = explode('#', $directions);
+        $data = explode($seperator, $data);
         $parsedArray = [];
-        foreach($directions as $direction) {
+        foreach($data as $item) {
             $parsedArray[] =
-                 trim($direction);
+                 trim($item);
         }
         return $parsedArray;
     }
@@ -313,9 +297,10 @@ class RecipesController extends AbstractController {
      * @param string $recipeIdentifier
      */
     private function validateResponse(array $result, $recipeIdentifier = '') {
-        $responseJson = $this->serializer->serialize($result, 'json');
+        $responseJson = !empty($result) ? $this->serializer->serialize($result, 'json') : [];
         if (empty($responseJson)) {
-            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
+
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
         } else {
             $this->response->setContent($responseJson);
