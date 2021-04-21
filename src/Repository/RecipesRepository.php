@@ -20,6 +20,7 @@ class RecipesRepository extends ServiceEntityRepository {
      * Valid recipe fields.
      */
     private const VALID_FIELDS = [
+        'id',
         'name',
         'prep_time',
         'cooking_time',
