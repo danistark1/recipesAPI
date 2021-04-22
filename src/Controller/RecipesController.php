@@ -190,7 +190,7 @@ class RecipesController extends AbstractController {
             empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
             empty($data['cuisine']) ? true : $recipe->setCookingTime($data['cooking_time']);
             empty($data['url']) ? true : $recipe->setCookingTime($data['url']);
-            $validFields = $this->validateRecipeFields($data);
+            $validFields = $this->validateRecipeFields($data, 'POST');
             $valid = true;
             if (!empty($data['category'])) {
                 $valid = $this->validateCategory($data['category']);
@@ -216,6 +216,7 @@ class RecipesController extends AbstractController {
 
     /**
      * Get recipe with a condition.
+     * ex. recipes/where?id=1
      *
      * @param Request $request
      * @return Response
@@ -320,7 +321,7 @@ class RecipesController extends AbstractController {
         // turn request data into an array
         $parameters = json_decode($request->getContent(), true);
         $parameters = $this->normalizeData($parameters);
-        $validPostFields = $this->validateRecipeFields($parameters);
+        $validPostFields = $this->validateRecipeFields($parameters, 'POST');
         $valid = false;
         if ($parameters && is_array($parameters) && $validPostFields) {
             $valid = $this->validateRequiredFields($parameters, __CLASS__.__FUNCTION__);
@@ -341,12 +342,13 @@ class RecipesController extends AbstractController {
      * Validate recipe fields.
      *
      * @param array $params
+     * @param string $type Type of request.
      * @return bool
      */
-    private function validateRecipeFields(array $params): bool {
+    private function validateRecipeFields(array $params, $type = 'GET'): bool {
         $valid = true;
         foreach($params as $key => $value) {
-            if (!in_array($key, $this->recipesRepository->getValidFields())) {
+            if (!in_array($key, $type === 'GET' ? $this->recipesRepository->getValidFields() : $this->recipesRepository->getValidPostFields())) {
                 $this->logger->log(self::VALIDATION_FAILED, ['field' => $key], self::STATUS_VALIDATION_FAILED);
                 $valid = false;
                 break;

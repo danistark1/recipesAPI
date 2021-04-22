@@ -36,6 +36,24 @@ class RecipesRepository extends ServiceEntityRepository {
     ];
 
     /**
+     * Valid recipe post fields.
+     */
+    private const VALID_POST_FIELDS = [
+        'name',
+        'prep_time',
+        'cooking_time',
+        'ingredients',
+        'servings',
+        'category',
+        'directions',
+        'favourites',
+        'added_by',
+        'calories',
+        'cuisine',
+        'url'
+    ];
+
+    /**
      * RecipesRepository constructor.
      *
      * @param ManagerRegistry $registry
@@ -162,6 +180,15 @@ class RecipesRepository extends ServiceEntityRepository {
      */
     public function getValidFields(): array {
         return self::VALID_FIELDS;
+    }
+
+    /**
+     * Return valid post recipe fields.
+     *
+     * @return string[]
+     */
+    public function getValidPostFields(): array {
+        return self::VALID_POST_FIELDS;
     }
 
     /*
