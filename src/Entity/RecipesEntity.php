@@ -34,7 +34,7 @@ class RecipesEntity {
     private $cooking_time;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="string", nullable=true)
      */
     private $servings;
 
@@ -124,12 +124,12 @@ class RecipesEntity {
         return $this;
     }
 
-    public function getServings(): ?int
+    public function getServings(): ?string
     {
         return $this->servings;
     }
 
-    public function setServings(?int $servings): self
+    public function setServings(?string $servings): self
     {
         $this->servings = $servings;
 

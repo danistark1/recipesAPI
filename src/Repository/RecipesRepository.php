@@ -87,6 +87,8 @@ class RecipesRepository extends ServiceEntityRepository {
         $recipesEntity->setCookingTime($params['cooking_time']);
         $recipesEntity->setCalories($params['calories']);
         $recipesEntity->setCuisine($params['cuisine']);
+        $recipesEntity->setServings($params['servings']);
+        $recipesEntity->setUrl($params['url']);
         try {
             $em->persist($recipesEntity);
         } catch (ORMInvalidArgumentException | ORMException $e) {
