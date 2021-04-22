@@ -89,7 +89,7 @@ class RecipesController extends AbstractController {
     /**
      * Get all recipes.
      * 
-     * @Route("/recipes", name="get_all_recipies")
+     * @Route("/recipes", methods={"GET"}, name="get_all_recipies")
      */
     public function index(): Response {
         //TODO Paginate.
@@ -312,7 +312,7 @@ class RecipesController extends AbstractController {
     /**
      * Post a recipe.
      *
-     * @Route("recipes",  methods={"POST"}, name="post")
+     * @Route("recipes",  methods={"POST"}, name="post_recipes")
      * @param Request $request
      * @return Response
      * @throws Exception
@@ -320,6 +320,10 @@ class RecipesController extends AbstractController {
     public function post(Request $request): Response {
         // turn request data into an array
         $parameters = json_decode($request->getContent(), true);
+        if (empty($parameters)) {
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            return $this->response;
+        }
         $parameters = $this->normalizeData($parameters);
         $validPostFields = $this->validateRecipeFields($parameters, 'POST');
         $valid = false;
