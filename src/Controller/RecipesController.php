@@ -251,12 +251,9 @@ class RecipesController extends AbstractController {
      */
     public function getSearch(Request $request): Response {
         $query = $request->getQueryString();
-        dump($query);
         $keyword = explode('=', $query);
         $result = str_replace('%20',' ', $keyword[1]);
         $filter = array_search('filter', $keyword);
-        dump($filter);
-        dump($keyword);
         if (isset($keyword[1])) {
             $keyword[1]= $result;
             $results = $this->recipesRepository->search($keyword[1]);
