@@ -15,7 +15,6 @@ use App\Kernel;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-
 /**
  * Class RecipesController
  *
@@ -46,9 +45,6 @@ class RecipesController extends AbstractController {
 
     /** @var Response  */
     private $response;
-
-    /** @var Request  */
-    private $request;
 
     /** @var RecipesRepository|null  */
     private $recipesRepository;

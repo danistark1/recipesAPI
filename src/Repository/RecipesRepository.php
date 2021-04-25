@@ -16,6 +16,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method RecipesEntity[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
 class RecipesRepository extends ServiceEntityRepository {
+
     /**
      * Valid recipe fields.
      */
@@ -89,12 +90,16 @@ class RecipesRepository extends ServiceEntityRepository {
         $recipesEntity->setCuisine($params['cuisine']);
         $recipesEntity->setServings($params['servings']);
         $recipesEntity->setUrl($params['url']);
+        $em->getConnection()->beginTransaction();
         try {
             $em->persist($recipesEntity);
+            $em->flush();
+            // Try and commit the transaction
+            $em->getConnection()->commit();
         } catch (ORMInvalidArgumentException | ORMException $e) {
             //$this->logger->log('test', [], Logger::CRITICAL);
         }
-        $em->flush();
+
 
         $id = $recipesEntity->getId();
         return $id;
@@ -110,8 +115,16 @@ class RecipesRepository extends ServiceEntityRepository {
      */
     public function updateRecipe($recipe) {
         $em = $this->getEntityManager();
-        $em->persist($recipe);
-        $em->flush();
+        $em->getConnection()->beginTransaction();
+        try {
+            $em->persist($recipe);
+            $em->flush();
+            // Try and commit the transaction
+            $em->getConnection()->commit();
+        }catch (ORMInvalidArgumentException | ORMException $e) {
+            //$this->logger->log('test', [], Logger::CRITICAL);
+        }
+
         return $recipe;
     }
 
