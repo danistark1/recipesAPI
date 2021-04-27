@@ -41,7 +41,7 @@ class RecipesController extends AbstractController {
 //    const CATEGORY_MAIN_DISH_PORK = 'main dish pork';
 //    const CATEGORY_MAIN_DISH_SEAFOOD = 'main dish seafood';
 //    const CATEGORY_MAIN_DISH_VEGETARIAN = 'main dish vegetarian';
-   const CATEGORY_MAIN_DISH = 'man dish';
+   const CATEGORY_MAIN_DISH = 'main dish';
     const CATEGORY_HOLIDAYS = 'holidays';
     const CATEGORY_BREAKFAST = 'breakfast';
     const CATEGORY_SIDE_DISH = 'side dish';
