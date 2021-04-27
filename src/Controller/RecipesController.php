@@ -45,13 +45,13 @@ class RecipesController extends AbstractController {
     const CATEGORY_HOLIDAYS = 'holidays';
     const CATEGORY_BREAKFAST = 'breakfast';
     const CATEGORY_SIDE_DISH = 'side dish';
-    const CATEGORY_BEVERAGES = 'beverages';
+    const CATEGORY_BEVERAGE = 'beverage';
     const CATEGORY_BREAD = 'bread';
     const CATEGORY_SOUP = 'soup';
 
     public static $categories = [
         self::CATEGORY_APPETIZER,
-        self::CATEGORY_BEVERAGES,
+        self::CATEGORY_BEVERAGE,
         self::CATEGORY_BREAD,
         self::CATEGORY_BREAKFAST,
         self::CATEGORY_DESSERT,
