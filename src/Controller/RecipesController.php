@@ -33,12 +33,19 @@ class RecipesController extends AbstractController {
     const VALIDATION_STATION_PARAMS = "Invalid post parameters.";
     const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q=";
 
-    const CATEGORY_dessert = 'dessert';
+    const CATEGORY_DESSERT = 'dessert';
     const CATEGORY_SALAD = 'salad';
     const CATEGORY_MAIN_DISH = 'main dish';
     const CATEGORY_BREAKFAST = 'breakfast';
+    const CATEGORY_SIDE_DISH = 'side dish';
 
-    public static $categories = [];
+    public static $categories = [
+        self::CATEGORY_DESSERT,
+        self::CATEGORY_SALAD,
+        self::CATEGORY_BREAKFAST,
+        self::CATEGORY_SIDE_DISH,
+        self::CATEGORY_MAIN_DISH
+        ];
 
     /** @var RecipesLogger  */
     private $logger;
@@ -415,9 +422,6 @@ class RecipesController extends AbstractController {
      */
     private function validateCategory($category): bool {
         $category = strtolower($category);
-        if (empty(self::$categories)) {
-            self::$categories = [self::CATEGORY_BREAKFAST, self::CATEGORY_dessert, self::CATEGORY_SALAD, self::CATEGORY_MAIN_DISH];
-        }
         return in_array($category, self::$categories);
     }
 }
