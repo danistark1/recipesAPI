@@ -35,11 +35,12 @@ class RecipesController extends AbstractController {
 
     const CATEGORY_DESSERTS = 'desserts';
     const CATEGORY_SALADS = 'salads';
-    const CATEGORY_MAIN_DISH_BEEF = 'main dish beef';
-    const CATEGORY_MAIN_DISH_POULTRY = 'main dish poultry';
-    const CATEGORY_MAIN_DISH_PORK = 'main dish pork';
-    const CATEGORY_MAIN_DISH_SEAFOOD = 'main dish seafood';
-    const CATEGORY_MAIN_DISH_VEGETARIAN = 'main dish vegetarian';
+//    const CATEGORY_MAIN_DISH_BEEF = 'main dish beef';
+//    const CATEGORY_MAIN_DISH_POULTRY = 'main dish poultry';
+//    const CATEGORY_MAIN_DISH_PORK = 'main dish pork';
+//    const CATEGORY_MAIN_DISH_SEAFOOD = 'main dish seafood';
+//    const CATEGORY_MAIN_DISH_VEGETARIAN = 'main dish vegetarian';
+   const CATEGORY_MAIN_DISH = 'man dish';
     const CATEGORY_HOLIDAYS = 'holidays';
     const CATEGORY_BREAKFAST = 'breakfast';
     const CATEGORY_SIDES = 'sides';
@@ -52,11 +53,12 @@ class RecipesController extends AbstractController {
         self::CATEGORY_SALADS,
         self::CATEGORY_BREAKFAST,
         self::CATEGORY_SIDES,
-        self::CATEGORY_MAIN_DISH_POULTRY,
-        self::CATEGORY_MAIN_DISH_BEEF,
-        self::CATEGORY_MAIN_DISH_PORK,
-        self::CATEGORY_MAIN_DISH_SEAFOOD,
-        self::CATEGORY_MAIN_DISH_VEGETARIAN,
+        self::CATEGORY_MAIN_DISH,
+//        self::CATEGORY_MAIN_DISH_POULTRY,
+//        self::CATEGORY_MAIN_DISH_BEEF,
+//        self::CATEGORY_MAIN_DISH_PORK,
+//        self::CATEGORY_MAIN_DISH_SEAFOOD,
+//        self::CATEGORY_MAIN_DISH_VEGETARIAN,
         self::CATEGORY_HOLIDAYS,
         self::CATEGORY_BEVERAGES,
         self::CATEGORY_BREADS,
