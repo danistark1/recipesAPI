@@ -33,18 +33,34 @@ class RecipesController extends AbstractController {
     const VALIDATION_STATION_PARAMS = "Invalid post parameters.";
     const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q=";
 
-    const CATEGORY_DESSERT = 'dessert';
-    const CATEGORY_SALAD = 'salad';
-    const CATEGORY_MAIN_DISH = 'main dish';
+    const CATEGORY_DESSERTS = 'desserts';
+    const CATEGORY_SALADS = 'salads';
+    const CATEGORY_MAIN_DISH_BEEF = 'main dish beef';
+    const CATEGORY_MAIN_DISH_POULTRY = 'main dish poultry';
+    const CATEGORY_MAIN_DISH_PORK = 'main dish pork';
+    const CATEGORY_MAIN_DISH_SEAFOOD = 'main dish seafood';
+    const CATEGORY_MAIN_DISH_VEGETARIAN = 'main dish vegetarian';
+    const CATEGORY_HOLIDAYS = 'holidays';
     const CATEGORY_BREAKFAST = 'breakfast';
-    const CATEGORY_SIDE_DISH = 'side dish';
+    const CATEGORY_SIDES = 'sides';
+    const CATEGORY_BEVERAGES = 'beverages';
+    const CATEGORY_BREADS = 'breads';
+    const CATEGORY_SOUPS = 'soups';
 
     public static $categories = [
-        self::CATEGORY_DESSERT,
-        self::CATEGORY_SALAD,
+        self::CATEGORY_DESSERTS,
+        self::CATEGORY_SALADS,
         self::CATEGORY_BREAKFAST,
-        self::CATEGORY_SIDE_DISH,
-        self::CATEGORY_MAIN_DISH
+        self::CATEGORY_SIDES,
+        self::CATEGORY_MAIN_DISH_POULTRY,
+        self::CATEGORY_MAIN_DISH_BEEF,
+        self::CATEGORY_MAIN_DISH_PORK,
+        self::CATEGORY_MAIN_DISH_SEAFOOD,
+        self::CATEGORY_MAIN_DISH_VEGETARIAN,
+        self::CATEGORY_HOLIDAYS,
+        self::CATEGORY_BEVERAGES,
+        self::CATEGORY_BREADS,
+        self::CATEGORY_SOUPS
         ];
 
     /** @var RecipesLogger  */

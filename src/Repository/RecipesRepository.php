@@ -97,7 +97,7 @@ class RecipesRepository extends ServiceEntityRepository {
             // Try and commit the transaction
             $em->getConnection()->commit();
         } catch (ORMInvalidArgumentException | ORMException $e) {
-            //$this->logger->log('test', [], Logger::CRITICAL);
+//            $this->logger->log('test', [], Logger::CRITICAL);
         }
 
 
