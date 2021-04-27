@@ -105,11 +105,11 @@ class RecipesController extends AbstractController {
         $this->request  = new Request();
         $this->logger = $logger;
         $this->recipesRepository = $recipesRepository;
-        $this->response->headers->set('recipes-api-version', "1.0");
-        $this->response->headers->set('Access-Control-Allow-Origin', '*');
-        $this->response->headers->set('Access-Control-Allow-Headers', 'X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method');
-        $this->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-        $this->response->headers->set('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+//        $this->response->headers->set('recipes-api-version', "1.0");
+//        $this->response->headers->set('Access-Control-Allow-Origin', '*');
+//        $this->response->headers->set('Access-Control-Allow-Headers', 'X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method');
+//        $this->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+//        $this->response->headers->set('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
         $this->time_start = microtime(true);
     }
 
