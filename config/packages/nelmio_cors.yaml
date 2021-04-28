@@ -13,7 +13,7 @@ nelmio_cors:
         '^/':
             origin_regex: false
             allow_origin: ['*']
-            allow_headers:s ['*']
+            allow_headers: ['*']
             allow_methods: ['POST', 'PUT', 'GET', 'DELETE', 'OPTIONS']
             max_age: 3600
             hosts: ['*']
