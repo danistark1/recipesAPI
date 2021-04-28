@@ -49,7 +49,7 @@ services:
             - '@doctrine.orm.entity_manager'
             - !php/const Monolog\Logger::ERROR
     app.http_kernel.cors_listener:
-        class: App\EventListener\HttpKernel\CorsListener
+        class: App\CorsListener
         tags:
             - { name: kernel.event_subscriber }
 
