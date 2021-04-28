@@ -30,7 +30,7 @@ class RecipesController extends AbstractController {
     const VALIDATION_FAILED = "Validation failed.";
     const VALIDATION_NO_RECORD = "No record found.";
     const VALIDATION_STATION_PARAMS = "Invalid post parameters.";
-    const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q=";
+    const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q={searchTerm}";
 
     const CATEGORY_DESSERT = 'dessert';
     const CATEGORY_SALAD = 'salad';
@@ -278,7 +278,7 @@ class RecipesController extends AbstractController {
         $keyword = explode('=', $query);
         $result = str_replace('%20',' ', $keyword[1]);
         $filter = array_search('filter', $keyword);
-        if (isset($keyword[1])) {
+        if (!empty(trim($keyword[1]))) {
             $keyword[1]= $result;
             $results = $this->recipesRepository->search($keyword[1]);
             if (!empty($results)) {
@@ -289,6 +289,7 @@ class RecipesController extends AbstractController {
         } else {
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $this->response->setContent(self::VALIDATION_INVALID_SEARCH_QUERY);
+
         }
         return $this->response;
     }
@@ -322,6 +323,7 @@ class RecipesController extends AbstractController {
         $responseJson = !empty($result) ? $this->serializer->serialize($result, 'json') : [];
         if (empty($responseJson)) {
             $this->response->setStatusCode(self::STATUS_NOT_FOUND);
+            $this->response->setContent(self::VALIDATION_NO_RECORD);
 
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
         } else {
@@ -417,6 +419,9 @@ class RecipesController extends AbstractController {
     private function normalizeData(array $parameters): array {
         $normalizedData = [];
         foreach($parameters as $param => $value) {
+            if ($param === 'name' || $param === 'added_by') {
+                $value =  ucwords($value);
+            }
             $normalizedData += [strtolower($param) => $value];
         }
         $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
