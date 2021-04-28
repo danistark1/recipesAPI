@@ -104,11 +104,6 @@ class RecipesController extends AbstractController {
         $this->request  = new Request();
         $this->logger = $logger;
         $this->recipesRepository = $recipesRepository;
-//        $this->response->headers->set('recipes-api-version', "1.0");
-//        $this->response->headers->set('Access-Control-Allow-Origin', '*');
-//        $this->response->headers->set('Access-Control-Allow-Headers', 'X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method');
-//        $this->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-//        $this->response->headers->set('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
         $this->time_start = microtime(true);
     }
 
@@ -199,6 +194,7 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function put($id, Request $request): Response {
+        // TODO Validate.
         // Update Fields.
         //name, prep_time, cooking_time, category, directions, ingredients, favourites, calories, cuisine, url
 
@@ -249,6 +245,7 @@ class RecipesController extends AbstractController {
      * @Route("recipes/where", methods={"GET"}, name="get_where")
      */
     public function getWhere(Request $request): Response {
+        // TODO Validate request.
         $params = $request->query->all();
         $params = array_change_key_case ($params, CASE_LOWER );
         $valid = $this->validateRecipeFields($params);
@@ -276,6 +273,7 @@ class RecipesController extends AbstractController {
      * @Route("recipes/search", methods={"GET"}, name="get_search")
      */
     public function getSearch(Request $request): Response {
+        // TODO Validate request.
         $query = $request->getQueryString();
         $keyword = explode('=', $query);
         $result = str_replace('%20',' ', $keyword[1]);
@@ -335,34 +333,49 @@ class RecipesController extends AbstractController {
     /**
      * Post a recipe.
      *
-     * @Route("recipes",  methods={"POST"}, name="post_recipes")
+     * @Route("recipes",  methods={"POST", "OPTIONS"}, name="post_recipes")
      * @param Request $request
      * @return Response
      * @throws Exception
      */
     public function post(Request $request): Response {
-        // turn request data into an array
-        $parameters = json_decode($request->getContent(), true);
-        if (empty($parameters)) {
-            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-            return $this->response;
-        }
-        $parameters = $this->normalizeData($parameters);
-        $validPostFields = $this->validateRecipeFields($parameters, 'POST');
-        $valid = false;
-        if ($parameters && is_array($parameters) && $validPostFields) {
-            $valid = $this->validateRequiredFields($parameters, __CLASS__.__FUNCTION__);
-        }
+        $pascalEm = (array)json_decode($request->getContent(), true);
+        $valid = $this->validateRequest($pascalEm);
         if ($valid) {
-            $recipeID = $this->recipesRepository->save($parameters);
-            $this->response->setStatusCode(self::STATUS_OK);
-            // Return posted data back.(use get to normalize ingredients array).
-            $this->getByIdInternal($recipeID);
+            $pascalEm = $this->normalizeData($pascalEm);
+            $validPostFields = $this->validateRecipeFields($pascalEm, 'POST');
+            $valid = false;
+            if ($pascalEm && is_array($pascalEm) && $validPostFields) {
+                $valid = $this->validateRequiredFields($pascalEm, __CLASS__.__FUNCTION__);
+            }
+            if ($valid) {
+                $recipeID = $this->recipesRepository->save($pascalEm);
+                $this->response->setStatusCode(self::STATUS_OK);
+                // Return posted data back.(use get to normalize ingredients array).
+                $this->getByIdInternal($recipeID);
             } else {
                 $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             }
-        $this->updateResponseHeader();
+            $this->updateResponseHeader();
+        }
         return $this->response;
+    }
+
+    /**
+     * Validate incoming request.
+     *
+     * @param Request $request
+     * @return bool $valid If request is valid.
+     */
+    private function validateRequest($pascalEm): bool {
+        $valid = true;
+        if (empty($pascalEm)) {
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            $this->response->setContent(self::VALIDATION_FAILED);
+            $this->logger->log('Invalid request object.', ['request content'=> $pascalEm], self::STATUS_VALIDATION_FAILED);
+            $valid = false;
+        }
+        return $valid;
     }
 
     /**
@@ -391,6 +404,8 @@ class RecipesController extends AbstractController {
         $time_end = microtime(true);
         $execution_time = ($time_end - $this->time_start);
         $this->response->headers->set('recipes-responseTime', $execution_time);
+        // TODO Get version from config.
+        $this->response->headers->set('recipeApi-version', '1.0');
     }
 
     /**
