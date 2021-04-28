@@ -7,7 +7,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
-class CorsSubscriber implements EventSubscriberInterface
+class CorsListener implements EventSubscriberInterface
 {
 
     public static function getSubscribedEvents(): array

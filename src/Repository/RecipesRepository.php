@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\ORMInvalidArgumentException;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Kernel;
 
 /**
  * @method RecipesEntity|null find($id, $lockMode = null, $lockVersion = null)
@@ -96,11 +97,10 @@ class RecipesRepository extends ServiceEntityRepository {
             $em->flush();
             // Try and commit the transaction
             $em->getConnection()->commit();
+
         } catch (ORMInvalidArgumentException | ORMException $e) {
 //            $this->logger->log('test', [], Logger::CRITICAL);
         }
-
-
         $id = $recipesEntity->getId();
         return $id;
     }

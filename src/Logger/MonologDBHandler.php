@@ -1,25 +1,19 @@
 <?php
 
 namespace App\Logger;
-use App\Entity\RecipesEntity;
 use App\Entity\RecipesLoggerEntity;use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\ORMException;
+use Doctrine\ORM\ORMInvalidArgumentException;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use App\Utils\RecipiesDateTime;
+use App\Kernel;
 
 class MonologDBHandler extends AbstractProcessingHandler {
     /**
      * @var EntityManagerInterface
      */
     protected $em;
-
-//    /**
-//     * @var WeatherConfiguration
-//     */
-//    protected $config;
-
-//    /** @var WeatherCacheHandler  */
-//    protected $configCache;
 
     public function __construct(EntityManagerInterface $em, $level = Logger::API, $bubble = true) {
         $this->em = $em;
@@ -40,6 +34,7 @@ class MonologDBHandler extends AbstractProcessingHandler {
 //            if ((int)$record['level'] === Logger::INFO || (int)$record['level'] === Logger::DEBUG) {
 //                return;
 //            }
+        $this->em->getConnection()->beginTransaction();
 
             try {
                 $logEntry = new RecipesLoggerEntity();
@@ -60,15 +55,14 @@ class MonologDBHandler extends AbstractProcessingHandler {
                 } else {
                     $logEntry->setContext([]);
                 }
-
-
+                // clear the manager from any other managed objects.
+                $this->em->clear();
                 $this->em->persist($logEntry);
                 $this->em->flush();
-            } catch (\Exception $e) {
-                error_log($record['message']);
-                error_log($e->getMessage());
+                $this->em->getConnection()->commit();
+            } catch (ORMInvalidArgumentException | ORMException $e) {
+
             }
-    //    }
 
 
 //        // Ensure the doctrine channel is ignored (unless its greater than a warning error), otherwise you will create an infinite loop, as doctrine like to log.. a lot..

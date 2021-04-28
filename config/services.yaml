@@ -32,7 +32,7 @@ services:
         # Common handler that will allow us to log various information
     monolog.db_handler:
         class: App\Logger\MonologDBHandler
-        public: true
+        public: false
           # The 'services' type handlers must be configured manually, as specified here: https://github.com/symfony/monolog-bundle/issues/116
         # The arguments that will go into the constructor
         arguments:
@@ -40,17 +40,18 @@ services:
             - !php/const Monolog\Logger::DEBUG
             # 'Bubble' argument to false: Handlers after this one will not be called if the log has already been taken into account
             - false
-
-        # Handler errors, filtering logs whose level is lower than "ERROR"
+        # ...
+    # Handler errors, filtering logs whose level is lower than "ERROR"
     monolog.error_db_handler:
         class: App\Logger\MonologDBHandler
         # The arguments that will go into the constructor
         arguments:
             - '@doctrine.orm.entity_manager'
             - !php/const Monolog\Logger::ERROR
-
-        # ...
-    app.http_kernel.cors_subscriber:
-        class: App\EventListener\HttpKernel\CorsSubscriber
+    app.http_kernel.cors_listener:
+        class: App\EventListener\HttpKernel\CorsListener
         tags:
             - { name: kernel.event_subscriber }
+
+
+

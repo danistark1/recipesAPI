@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\RecipesLoggerEntityRepository;
+use App\Repository\RecipesLoggerRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=RecipesLoggerEntityRepository::class)
+ * @ORM\Entity(repositoryClass=RecipesLoggerRepository::class)
  * @ORM\Table(name="recipesLogger")
  */
 class RecipesLoggerEntity

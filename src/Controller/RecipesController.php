@@ -11,7 +11,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Exception;
-use App\Kernel;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -116,7 +115,7 @@ class RecipesController extends AbstractController {
     /**
      * Get all recipes.
      * 
-     * @Route("/recipes", methods={"GET", "OPTIONS"}, name="get_all_recipies")
+     * @Route("/recipes", methods={"GET"}, name="get_all_recipies")
      */
     public function index(): Response {
         //TODO Paginate.
