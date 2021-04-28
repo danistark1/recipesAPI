@@ -115,7 +115,7 @@ class RecipesController extends AbstractController {
     /**
      * Get all recipes.
      * 
-     * @Route("/recipes", methods={"GET"}, name="get_all_recipies")
+     * @Route("/recipes", methods={"GET", "OPTIONS"}, name="get_all_recipies")
      */
     public function index(): Response {
         //TODO Paginate.

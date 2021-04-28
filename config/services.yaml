@@ -32,7 +32,7 @@ services:
         # Common handler that will allow us to log various information
     monolog.db_handler:
         class: App\Logger\MonologDBHandler
-        public: false
+        public: true
           # The 'services' type handlers must be configured manually, as specified here: https://github.com/symfony/monolog-bundle/issues/116
         # The arguments that will go into the constructor
         arguments:
