@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\RecipesRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 /**
  * @ORM\Entity(repositoryClass=RecipesRepository::class)
@@ -24,14 +25,14 @@ class RecipesEntity {
     private $name;
 
     /**
-     * @ORM\Column(type="string", length=100, nullable=true)
+     * @ORM\Column(type="string", name="prepTime", length=100, nullable=true)
      */
-    private $prep_time;
+    private $prepTime;
 
     /**
-     * @ORM\Column(type="string", length=100, nullable=true)
+     * @ORM\Column(type="string", name="cookingTime", length=100, nullable=true)
      */
-    private $cooking_time;
+    private $cookingTime;
 
     /**
      * @ORM\Column(type="string", nullable=true)
@@ -49,9 +50,9 @@ class RecipesEntity {
     private $directions;
 
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string",  name="insertDateTime")
      */
-    private $insert_date_time;
+    private $insertDateTime;
 
     /**
      * @ORM\Column(type="integer")
@@ -59,9 +60,10 @@ class RecipesEntity {
     private $favourites;
 
     /**
-     * @ORM\Column(type="string", length=100, nullable=true)
+     * @ORM\Column(type="string", name="addedBy", length=100, nullable=true)
+
      */
-    private $added_by;
+    private $addedBy;
 
     /**
      * @ORM\Column(type="string", length=100, nullable=true)
@@ -102,24 +104,24 @@ class RecipesEntity {
 
     public function getPrepTime(): ?string
     {
-        return $this->prep_time;
+        return $this->prepTime;
     }
 
-    public function setPrepTime(?string $prep_time): self
+    public function setPrepTime(?string $prepTime): self
     {
-        $this->prep_time = $prep_time;
+        $this->prepTime = $prepTime;
 
         return $this;
     }
 
     public function getCookingTime(): ?string
     {
-        return $this->cooking_time;
+        return $this->cookingTime;
     }
 
-    public function setCookingTime(?string $cooking_time): self
+    public function setCookingTime(?string $cookingTime): self
     {
-        $this->cooking_time = $cooking_time;
+        $this->cookingTime = $cookingTime;
 
         return $this;
     }
@@ -162,12 +164,12 @@ class RecipesEntity {
 
     public function getInsertDateTime(): ?string
     {
-        return $this->insert_date_time;
+        return $this->insertDateTime;
     }
 
-    public function setInsertDateTime(string $insert_date_time): self
+    public function setInsertDateTime(string $insertDateTime): self
     {
-        $this->insert_date_time = $insert_date_time;
+        $this->insertDateTime = $insertDateTime;
 
         return $this;
     }
@@ -186,12 +188,12 @@ class RecipesEntity {
 
     public function getAddedBy(): ?string
     {
-        return $this->added_by;
+        return $this->addedBy;
     }
 
-    public function setAddedBy(?string $added_by): self
+    public function setAddedBy(?string $addedBy): self
     {
-        $this->added_by = $added_by;
+        $this->addedBy = $addedBy;
 
         return $this;
     }
@@ -243,6 +245,4 @@ class RecipesEntity {
 
         return $this;
     }
-
-
 }

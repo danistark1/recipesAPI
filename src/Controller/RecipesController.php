@@ -6,6 +6,7 @@ use App\CategorySchema;
 use App\Entity\CategoriesEntity;
 use App\Entity\RecipesEntity;
 use App\RecipesPostSchema;
+use App\RecipesUpdateSchema;
 use App\Repository\RecipesRepository;
 use App\RecipesLogger;
 use Monolog\Logger;
@@ -125,9 +126,12 @@ class RecipesController extends AbstractController {
      */
     public function getByName(string $name): Response {
         $name = strtolower($name);
-        $results = $this->recipesRepository->findByQuery(['name' => $name]);
-        $this->normalize($results);
-        $this->validateResponse($results, $name);
+        $valid = !empty($name);
+        if ($valid) {
+            $results = $this->recipesRepository->findByQuery(['name' => $name]);
+            $this->normalize($results);
+            $this->validateResponse($results, $name);
+        }
         $this->updateResponseHeader();
         return $this->response;
     }
@@ -143,7 +147,8 @@ class RecipesController extends AbstractController {
     public function postCategory(Request $request, ValidatorInterface $validator, CategorySchema $categorySchema): Response {
         $input = (array)json_decode($request->getContent());
         $violations = $validator->validate($input, $categorySchema::$schema);
-        $this->validateResponse([], '', $violations);
+        // TODO Category Post
+        $this->validateRequest($violations);
         return $this->response;
     }
 
@@ -182,11 +187,14 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function delete($id): Response {
-        $result = $this->recipesRepository->delete($id);
-        if (!$result) {
-            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
-        } else {
-            $this->response->setStatusCode(self::STATUS_OK);
+        if (is_numeric($id)) {
+            $result = $this->recipesRepository->delete($id);
+            if (!$result) {
+                $this->response->setStatusCode(self::STATUS_NOT_FOUND);
+                $this->response->setContent(self::VALIDATION_NO_RECORD);
+            } else {
+                $this->response->setStatusCode(self::STATUS_OK);
+            }
         }
         $this->updateResponseHeader();
         return $this->response;
@@ -196,51 +204,50 @@ class RecipesController extends AbstractController {
     /**
      * Update a recipe.
      *
-     * @Route("recipes/update/{id}", methods={"PUT"}, name="update_recipe")
+     * @Route("recipes/update/{id}", methods={"PATCH"}, name="update_recipe")
      * @param $id
      * @param Request $request
      * @return Response
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function put($id, Request $request): Response {
-        // TODO Validate/ Refactor method.
-        // Update Fields.
-        //name, prep_time, cooking_time, category, directions, ingredients, favourites, calories, cuisine, url
-
-        $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
-        if (!empty($recipe)) {
-            $data = json_decode($request->getContent(), true);
-            $data = $this->normalizeRecipeData($data);
-            empty($data['name']) ? true : $recipe->setName($data['name']);
-            empty($data['prep_time']) ? true : $recipe->setPrepTime($data['prep_time']);
-            empty($data['cooking_time']) ? true : $recipe->setCookingTime($data['cooking_time']);
-            empty($data['category']) ? true : $recipe->setCategory($data['category']);
-            empty($data['directions']) ? true : $recipe->setDirections($data['directions']);
-            empty($data['ingredients']) ? true : $recipe->setIngredients($data['ingredients']);
-            empty($data['favourites']) ? true : $recipe->setFavourites($data['favourites']);
-            empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
-            empty($data['cuisine']) ? true : $recipe->setCookingTime($data['cooking_time']);
-            empty($data['url']) ? true : $recipe->setCookingTime($data['url']);
-            $validFields = $this->validateRecipeFields($data, 'POST');
-            $valid = true;
-            if (!empty($data['category'])) {
-                $valid = $this->validateCategory($data['category']);
-            }
-            if ($valid && $validFields) {
-                $updatedRecipe = $this->recipesRepository->updateRecipe($recipe);
-                if ($updatedRecipe instanceof RecipesEntity) {
-                    $this->getByIdInternal($id);
+    public function patch($id, Request $request, ValidatorInterface $validator, RecipesUpdateSchema $recipesUpdateSchema): Response {
+        $data = json_decode($request->getContent(), true);
+        $violations = $validator->validate($data, $recipesUpdateSchema::$schema);
+        $valid = $this->validateRequest($violations);
+        if ($valid) {
+            $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
+            if (!empty($recipe)) {
+                // TODO Refactor this nonsense.
+                empty($data['name']) ? true : $recipe->setName($data['name']);
+                empty($data['prepTime']) ? true : $recipe->setPrepTime($data['prepTime']);
+                empty($data['cookingTime']) ? true : $recipe->setCookingTime($data['cookingTime']);
+                empty($data['category']) ? true : $recipe->setCategory($data['category']);
+                empty($data['directions']) ? true : $recipe->setDirections($data['directions']);
+                empty($data['ingredients']) ? true : $recipe->setIngredients($data['ingredients']);
+                empty($data['favourites']) ? true : $recipe->setFavourites($data['favourites']);
+                empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
+                empty($data['cuisine']) ? true : $recipe->setCuisine($data['cuisine']);
+                empty($data['addedBy']) ? true : $recipe->setAddedBy($data['addedBy']);
+                empty($data['url']) ? true : $recipe->setUrl($data['url']);
+                if (!empty($data['category'])) {
+                    $valid = $this->validateCategory($data['category']);
+                }
+                if ($valid) {
+                    $updatedRecipe = $this->recipesRepository->updateRecipe($recipe);
+                    if (!empty($updatedRecipe)) {
+                        $this->getByIdInternal($id);
+                    } else {
+                        $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+                        $this->logger->log(self::VALIDATION_FAILED, ['fields' => $updatedRecipe], Logger::ALERT);
+                    }
                 } else {
-                    $this->response->setStatusCode(self::STATUS_NO_CONTENT);
-                    $this->logger->log(self::VALIDATION_FAILED, ['fields' => $updatedRecipe], Logger::ALERT);
+                    $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+                    $this->logger->log(self::VALIDATION_FAILED, ['fields' => $data], Logger::ALERT);
                 }
             } else {
-                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-                $this->logger->log(self::VALIDATION_FAILED, ['fields' => $data], Logger::ALERT);
+                $this->response->setStatusCode(self::STATUS_NOT_FOUND);
             }
-        } else {
-            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
         }
         return $this->response;
     }
@@ -327,7 +334,7 @@ class RecipesController extends AbstractController {
      * @param array $result
      * @param string $recipeIdentifier
      */
-    private function validateResponse(array $result, $recipeIdentifier = '', $violations = []) {
+    private function validateResponse(array $result, $recipeIdentifier = '') {
         $responseJson = !empty($result) ? $this->serializer->serialize($result, 'json') : [];
         if (empty($responseJson)) {
             $this->response->setStatusCode(self::STATUS_NOT_FOUND);
@@ -375,7 +382,7 @@ class RecipesController extends AbstractController {
      */
     private function validateRequest($violations = []): bool {
         $valid = true;
-        if ($violations instanceof  ConstraintViolationListInterface && $violations->count()) {
+        if ($violations instanceof  ConstraintViolationListInterface && $violations->count() > 0) {
             $formatedViolationList = [];
             for ($i = 0; $i < $violations->count(); $i++) {
                 $violation = $violations->get($i);
@@ -426,17 +433,18 @@ class RecipesController extends AbstractController {
      * @return array Normalized Data
      */
     private function normalizeRecipeData(array $parameters): array {
+        // TODO this shouldn't be needed with Schema validation.
         $normalizedData = [];
         foreach($parameters as $param => $value) {
-            if ($param === 'name' || $param === 'added_by') {
+            if ($param === 'name' || $param === 'addedBy') {
                 $value =  ucwords($value);
             }
             $normalizedData += [strtolower($param) => $value];
         }
         $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
-        $normalizedData['added_by'] = $normalizedData['added_by'] ?? '';
-        $normalizedData['prep_time'] = $normalizedData['prep_time'] ?? null;
-        $normalizedData['cooking_time'] = $normalizedData['cooking_time'] ?? null;
+        $normalizedData['addedBy'] = $normalizedData['addedBy'] ?? '';
+        $normalizedData['prepTime'] = $normalizedData['prepTime'] ?? null;
+        $normalizedData['cookingTime'] = $normalizedData['cookingTime'] ?? null;
         $normalizedData['calories'] = $normalizedData['calories'] ?? null;
         $normalizedData['cuisine'] = $normalizedData['cuisine'] ?? '';
         $normalizedData['url'] = $normalizedData['url'] ?? '';
@@ -452,6 +460,7 @@ class RecipesController extends AbstractController {
      * @return bool
      */
     private function validateRequiredFields(array $parameters, $sender): bool {
+        // TODO This should be needed with Schema validation.
         $valid = isset($parameters['name']) && (isset($parameters['category']) && $this->validateCategory($parameters['category'])) && isset($parameters['directions']) && isset($parameters['ingredients']);
         if (!$valid) {
             $this->response->setContent(self::VALIDATION_FAILED);
@@ -469,6 +478,7 @@ class RecipesController extends AbstractController {
      * @return bool
      */
     private function validateCategory($category): bool {
+        // TODO this shoul be part of validation schema.
         $category = strtolower($category);
         return in_array($category, self::$categories);
     }
