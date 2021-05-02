@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\RecipesEntity;
 use App\Utils\RecipiesDateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ConnectionException;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\ORMInvalidArgumentException;
 use Doctrine\Persistence\ManagerRegistry;
@@ -24,14 +25,14 @@ class RecipesRepository extends ServiceEntityRepository {
     private const VALID_FIELDS = [
         'id',
         'name',
-        'prep_time',
-        'cooking_time',
+        'prepTime',
+        'cookingTime',
         'ingredients',
         'servings',
         'category',
         'directions',
         'favourites',
-        'added_by',
+        'addedBy',
         'calories',
         'cuisine',
         'url'
@@ -42,14 +43,14 @@ class RecipesRepository extends ServiceEntityRepository {
      */
     private const VALID_POST_FIELDS = [
         'name',
-        'prep_time',
-        'cooking_time',
+        'prepTime',
+        'cookingTime',
         'ingredients',
         'servings',
         'category',
         'directions',
         'favourites',
-        'added_by',
+        'addedBy',
         'calories',
         'cuisine',
         'url'
@@ -84,9 +85,9 @@ class RecipesRepository extends ServiceEntityRepository {
         $dt = RecipiesDateTime::dateNow('', true);
         $recipesEntity->setInsertDateTime($dt);
         $recipesEntity->setFavourites($params['favourites']);
-        $recipesEntity->setAddedBy($params['added_by']);
-        $recipesEntity->setPrepTime($params['prep_time']);
-        $recipesEntity->setCookingTime($params['cooking_time']);
+        $recipesEntity->setAddedBy($params['addedBy']);
+        $recipesEntity->setPrepTime($params['prepTime']);
+        $recipesEntity->setCookingTime($params['cookingTime']);
         $recipesEntity->setCalories($params['calories']);
         $recipesEntity->setCuisine($params['cuisine']);
         $recipesEntity->setServings($params['servings']);
