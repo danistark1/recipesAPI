@@ -14,7 +14,6 @@
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.8",
         "friendsofsymfony/rest-bundle": "^3.0",
-        "justinrainbow/json-schema": "^5.2",
         "nelmio/cors-bundle": "^2.1",
         "symfony/cache": "5.2.*",
         "symfony/console": "5.2.*",

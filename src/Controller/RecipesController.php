@@ -439,13 +439,13 @@ class RecipesController extends AbstractController {
             if ($param === 'name' || $param === 'addedBy') {
                 $value =  ucwords($value);
             }
-            $normalizedData += [strtolower($param) => $value];
+            $normalizedData += [$param => $value];
         }
         $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
         $normalizedData['addedBy'] = $normalizedData['addedBy'] ?? '';
         $normalizedData['prepTime'] = $normalizedData['prepTime'] ?? null;
         $normalizedData['cookingTime'] = $normalizedData['cookingTime'] ?? null;
-        $normalizedData['calories'] = $normalizedData['calories'] ?? null;
+        $normalizedData['calories'] = $normalizedData['calories'] ?? 'NA';
         $normalizedData['cuisine'] = $normalizedData['cuisine'] ?? '';
         $normalizedData['url'] = $normalizedData['url'] ?? '';
         $normalizedData['servings'] = $normalizedData['servings'] ?? '';
