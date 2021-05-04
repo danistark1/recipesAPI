@@ -335,9 +335,9 @@ class RecipesController extends AbstractController {
      * @param string $recipeIdentifier
      */
     private function validateResponse(array $result, $recipeIdentifier = '') {
-        $responseJson = !empty($result) ? $this->serializer->serialize($result, 'json') : [];
+        $responseJson = !empty($result) ? $this->serializer->serialize($result, 'json') : '';
         if (empty($responseJson)) {
-            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
+            $this->response->setStatusCode(404);
             $this->response->setContent(self::VALIDATION_NO_RECORD);
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
         } else {
