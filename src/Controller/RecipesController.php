@@ -207,7 +207,7 @@ class RecipesController extends AbstractController {
     /**
      * Toggle favourites.
      *
-     * @Route("recipes/favourites/{id}", methods={"PATCH"}, name="update_recipe_favourites")
+     * @Route("recipes/favourites/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe_favourites")
      * @param $id
      * @param Request $request
      * @return Response
@@ -230,7 +230,7 @@ class RecipesController extends AbstractController {
     /**
      * Update a recipe.
      *
-     * @Route("recipes/update/{id}", methods={"PATCH"}, name="update_recipe")
+     * @Route("recipes/update/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe")
      * @param $id
      * @param Request $request
      * @return Response
