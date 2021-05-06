@@ -8,7 +8,7 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 /**
  * @ORM\Entity(repositoryClass=RecipesRepository::class)
- * @ORM\Table(name="recipesEntity")
+ * @ORM\Table(indexes={@ORM\Index(columns={"name"})}, name="recipesEntity")
  */
 class RecipesEntity {
 

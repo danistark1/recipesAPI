@@ -171,8 +171,11 @@ class RecipesController extends AbstractController {
      *
      * @param $id
      */
-    private function getByIdInternal($id) {
+    private function getByIdInternal($id, $return = false) {
         $results = $this->recipesRepository->findByQuery(['id' => $id]);
+        if ($return) {
+            return $results;
+        }
         $this->normalize($results);
         $this->validateResponse($results, $id);
     }
@@ -202,6 +205,29 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Toggle favourites.
+     *
+     * @Route("recipes/favourites/{id}", methods={"PATCH"}, name="update_recipe_favourites")
+     * @param $id
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function patchFavourites($id, Request $request): Response {
+            $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
+            if (!empty($recipe)) {
+                $recipe = $this->recipesRepository->toggleFavourites($recipe);
+                if ($recipe instanceof RecipesEntity) {
+                    $this->validateResponse($recipe);
+                }
+            } else {
+                $this->validateResponse($recipe);
+            }
+        return $this->response;
+    }
+
+    /**
      * Update a recipe.
      *
      * @Route("recipes/update/{id}", methods={"PATCH"}, name="update_recipe")
@@ -225,7 +251,7 @@ class RecipesController extends AbstractController {
                 empty($data['category']) ? true : $recipe->setCategory($data['category']);
                 empty($data['directions']) ? true : $recipe->setDirections($data['directions']);
                 empty($data['ingredients']) ? true : $recipe->setIngredients($data['ingredients']);
-                empty($data['favourites']) ? true : $recipe->setFavourites($data['favourites']);
+                $data['favourites'] ?  $recipe->setFavourites(1): $recipe->setFavourites(0);
                 empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
                 empty($data['cuisine']) ? true : $recipe->setCuisine($data['cuisine']);
                 empty($data['addedBy']) ? true : $recipe->setAddedBy($data['addedBy']);
@@ -331,17 +357,17 @@ class RecipesController extends AbstractController {
     /**
      * Validate API response.
      *
-     * @param array $result
+     * @param array|RecipesEntity $result
      * @param string $recipeIdentifier
      */
-    private function validateResponse(array $result, $recipeIdentifier = '') {
-        $responseJson = !empty($result) ? $this->serializer->serialize($result, 'json') : '';
-        if (empty($responseJson)) {
+    private function validateResponse($result, $recipeIdentifier = '') {
+        $response = !empty($result) ? $this->serializer->serialize($result, 'json') : '';
+        if (empty($response)) {
             $this->response->setStatusCode(404);
             $this->response->setContent(self::VALIDATION_NO_RECORD);
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
         } else {
-            $this->response->setContent($responseJson);
+            $this->response->setContent($response);
             $this->response->setStatusCode(self::STATUS_OK);
         }
     }

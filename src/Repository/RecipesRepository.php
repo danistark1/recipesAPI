@@ -107,6 +107,34 @@ class RecipesRepository extends ServiceEntityRepository {
     }
 
     /**
+     * Toggle favourites.
+     *
+     * @param $recipe
+     * @return mixed
+     * @throws ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function toggleFavourites($recipe) {
+        if ($recipe->getFavourites() === 1) {
+            $recipe->setFavourites(0);
+        } else {
+            $recipe->setFavourites(1);
+        }
+        $em = $this->getEntityManager();
+        $em->getConnection()->beginTransaction();
+        try {
+            $em->persist($recipe);
+            $em->flush();
+            // Try and commit the transaction
+            $em->getConnection()->commit();
+        }catch (ORMInvalidArgumentException | ORMException $e) {
+            //$this->logger->log('test', [], Logger::CRITICAL);
+        }
+
+        return $recipe;
+    }
+
+    /**
      * Update a recipe.
      *
      * @param $recipe
