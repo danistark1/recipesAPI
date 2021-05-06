@@ -85,6 +85,11 @@ class RecipesEntity {
      */
     private $url;
 
+    /**
+     * @ORM\Column(type="boolean", nullable=false)
+     */
+    private $featured;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -242,6 +247,18 @@ class RecipesEntity {
     public function setUrl(string $url): self
     {
         $this->url = $url;
+
+        return $this;
+    }
+
+    public function getFeatured(): ?bool
+    {
+        return $this->featured;
+    }
+
+    public function setFeatured(?bool $featured): self
+    {
+        $this->featured = $featured;
 
         return $this;
     }

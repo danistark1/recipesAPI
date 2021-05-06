@@ -475,6 +475,7 @@ class RecipesController extends AbstractController {
         $normalizedData['cuisine'] = $normalizedData['cuisine'] ?? '';
         $normalizedData['url'] = $normalizedData['url'] ?? '';
         $normalizedData['servings'] = $normalizedData['servings'] ?? '';
+        $normalizedData['featured'] = $normalizedData['featured'] ?? false;
         return $normalizedData;
     }
 

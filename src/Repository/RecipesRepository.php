@@ -35,7 +35,8 @@ class RecipesRepository extends ServiceEntityRepository {
         'addedBy',
         'calories',
         'cuisine',
-        'url'
+        'url',
+        'featured'
     ];
 
     /**
@@ -92,6 +93,7 @@ class RecipesRepository extends ServiceEntityRepository {
         $recipesEntity->setCuisine($params['cuisine']);
         $recipesEntity->setServings($params['servings']);
         $recipesEntity->setUrl($params['url']);
+        $recipesEntity->setFeatured($params['featured']);
         $em->getConnection()->beginTransaction();
         try {
             $em->persist($recipesEntity);

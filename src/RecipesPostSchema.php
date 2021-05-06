@@ -3,6 +3,7 @@
 
 namespace App;
 
+use Cassandra\Tinyint;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -36,6 +37,7 @@ class RecipesPostSchema {
                 'cuisine' => new Assert\Optional([new Assert\Length(['min' => 3])]),
                 'ingredients' => [new Assert\Length(['min' => 3])],
                 'url' => new Assert\Optional([new Assert\Length(['min' => 3]), new Assert\NotBlank]),
+                'featured' => new Assert\Optional(new Assert\Type('bool')),
             ]);
         }
     }
