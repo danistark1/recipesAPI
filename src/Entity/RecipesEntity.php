@@ -55,7 +55,7 @@ class RecipesEntity {
     private $insertDateTime;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="boolean", nullable=false)
      */
     private $favourites;
 
@@ -179,7 +179,7 @@ class RecipesEntity {
         return $this;
     }
 
-    public function getFavourites(): ?int
+    public function getFavourites(): ?bool
     {
         return $this->favourites;
     }

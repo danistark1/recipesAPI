@@ -217,13 +217,36 @@ class RecipesController extends AbstractController {
     public function patchFavourites($id, Request $request): Response {
             $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
             if (!empty($recipe)) {
-                $recipe = $this->recipesRepository->toggleFavourites($recipe);
+                $recipe = $this->recipesRepository->toggleField('Favourites', $recipe);
                 if ($recipe instanceof RecipesEntity) {
                     $this->validateResponse($recipe);
                 }
             } else {
                 $this->validateResponse($recipe);
             }
+        return $this->response;
+    }
+
+    /**
+     * Toggle featured.
+     *
+     * @Route("recipes/featured/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe_featured")
+     * @param $id
+     * @param Request $request
+     * @return Response
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function patchFeatured($id, Request $request): Response {
+        $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
+        if (!empty($recipe)) {
+            $recipe = $this->recipesRepository->toggleField('Featured', $recipe);
+            if ($recipe instanceof RecipesEntity) {
+                $this->validateResponse($recipe);
+            }
+        } else {
+            $this->validateResponse($recipe);
+        }
         return $this->response;
     }
 

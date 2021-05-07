@@ -116,11 +116,11 @@ class RecipesRepository extends ServiceEntityRepository {
      * @throws ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function toggleFavourites($recipe) {
-        if ($recipe->getFavourites() === 1) {
-            $recipe->setFavourites(0);
+    public function toggleField($field, $recipe) {
+        if ($recipe->{"get".$field}() === true) {
+            $recipe->{"set".$field}(0);
         } else {
-            $recipe->setFavourites(1);
+            $recipe->{"set".$field}(1);
         }
         $em = $this->getEntityManager();
         $em->getConnection()->beginTransaction();
