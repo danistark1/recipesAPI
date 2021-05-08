@@ -199,12 +199,20 @@ class RecipesRepository extends ServiceEntityRepository {
         return $recipeData;
     }
 
-    public function search($keyword) {
+    public function search($keyword, $filter) {
         $qb = $this->getEntityManager()->createQueryBuilder();
 
-        $results = $qb->select('re')
-            ->from(RecipesEntity::class, 're')
-            ->where($qb->expr()->like('re.name', ':name'))
+        $qb->select('re')
+            ->from(RecipesEntity::class, 're');
+        $results = $qb->where(
+            $qb->expr()->like('re.name', ':name'))->setParameter('name',  '%' . $keyword . '%')
+            ->getQuery()
+            ->execute();
+        if (!empty($filter)) {
+            $results = $qb->andWhere('re.category = :category')->setParameter('category', $filter['category'])
+                ->getQuery()
+                ->execute();
+        }
 //            ->orwhere($qb->expr()->like('re.directions', ':directions'))
 //            ->orwhere($qb->expr()->like('re.category', ':category'))
 //            ->orwhere($qb->expr()->like('re.cuisine', ':cuisine'))
@@ -213,9 +221,9 @@ class RecipesRepository extends ServiceEntityRepository {
 //            ->setParameter('cuisine', $keyword . '%')
 //            ->setParameter('category', $keyword . '%')
 //            ->setParameter('directions', $keyword . '%')
-            ->setParameter('name',  '%' . $keyword . '%')
-            ->getQuery()
-            ->execute();
+
+//        $qb->getQuery()
+//            ->execute();
         return $results;
     }
 

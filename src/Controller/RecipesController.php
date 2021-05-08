@@ -328,9 +328,31 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Builds an http query string.
+     * @param array $query  // of key value pairs to be used in the query
+     * @return string       // http query string.
+     **/
+    function build_http_query( $query ){
+
+        $query_array = array();
+
+        foreach( $query as $key => $key_value ){
+
+            $query_array[] = urlencode( $key ) . '=' . urlencode( $key_value );
+
+        }
+
+        return implode( '&', $query_array );
+
+    }
+
+    /**
      * Right wildcard search for a recipe.
-     * Ex. - GET /recipes/api/search?q=pizza
-     *     - GET /recipes/api/search?q=main dish
+     * Ex. - GET /recipes/search?q=pizza
+     *     - GET /recipes/search?q=main dish
+     *
+     * Ex. With filtering
+     *     - GET /recipes/search?q=pizza&filter=category&category=main dish
      *
      * @param Request $request
      * @param string $keyword
@@ -339,13 +361,16 @@ class RecipesController extends AbstractController {
      */
     public function getSearch(Request $request): Response {
         // TODO Validate request.
-        $query = $request->getQueryString();
-        $keyword = explode('=', $query);
-        $result = str_replace('%20',' ', $keyword[1]);
-        $filter = array_search('filter', $keyword);
-        if (!empty(trim($keyword[1]))) {
-            $keyword[1]= $result;
-            $results = $this->recipesRepository->search($keyword[1]);
+        $query = $request->query->get('q');
+        $filter = $request->query->get('filter');
+        $category = null;
+        if ($filter) {
+            $category = $request->query->get('category');
+        }
+        $query = str_replace('%20',' ', $query);
+        if (!empty(trim($query))) {
+            $filter = ($category  && $filter) ?  ['category' => $category, 'filter' => $filter] : [];
+            $results = $this->recipesRepository->search($query, $filter);
             if (!empty($results)) {
                 $this->normalize($results);
             }
