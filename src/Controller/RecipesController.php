@@ -326,10 +326,11 @@ class RecipesController extends AbstractController {
             $results = $resultsAll['results'] ?? [];
             $pagesCount = $resultsAll['pagesCount'] ?? 0;
             $totalItems = $resultsAll['totalItems'] ?? 0;
-            $this->response->headers->set('recipes-totalItems', $totalItems);
-            $this->response->headers->set('recipes-pagesCount', $pagesCount);
+
             if (!empty($results)) {
                 $this->normalize($results);
+                $this->response->headers->set('recipes-totalItems', $totalItems);
+                $this->response->headers->set('recipes-pagesCount', $pagesCount);
             }
             $this->validateResponse($results);
             $this->updateResponseHeader();
@@ -364,13 +365,13 @@ class RecipesController extends AbstractController {
             $filter = ($category  && $filter) ?  ['category' => $category, 'filter' => $filter] : [];
             $resultsAll = $this->recipesRepository->getSearchByPage($query, $filter, $page) ?? [];
             $results = $resultsAll['results'];
-            if (!empty($results)) {
-                $this->normalize($results);
-            }
             $pagesCount = $resultsAll['pagesCount'] ?? 0;
             $totalItems = $resultsAll['totalItems'] ?? 0;
-            $this->response->headers->set('recipes-totalItems', $totalItems);
-            $this->response->headers->set('recipes-pagesCount', $pagesCount);
+            if (!empty($results)) {
+                $this->normalize($results);
+                $this->response->headers->set('recipes-totalItems', $totalItems);
+                $this->response->headers->set('recipes-pagesCount', $pagesCount);
+            }
             $this->validateResponse($results);
             $this->updateResponseHeader();
         } else {
@@ -448,6 +449,8 @@ class RecipesController extends AbstractController {
         $response = !empty($result) ? $this->serializer->serialize($result, 'json') : '';
         if (empty($response)) {
             $this->response->setStatusCode(404);
+            $this->response->headers->set('recipes-totalItems', 0);
+            $this->response->headers->set('recipes-pagesCount', 0);
             $this->response->setContent(self::VALIDATION_NO_RECORD);
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
         } else {
