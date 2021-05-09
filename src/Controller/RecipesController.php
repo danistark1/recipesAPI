@@ -311,11 +311,17 @@ class RecipesController extends AbstractController {
      */
     public function getWhere(Request $request): Response {
         // TODO Validate request.
+        $page = $request->get('page');
         $params = $request->query->all();
-        $params = array_change_key_case ($params, CASE_LOWER );
-        $valid = $this->validateRecipeFields($params);
-        if ($valid) {
-            $results = $this->recipesRepository->findByQuery($params);
+        unset($params['page']);
+        $value = array_values($params);
+        $key = array_keys($params);
+        $query = array_merge($key, $value);
+        $query['page'] = $page;
+        //$params = array_change_key_case ($params, CASE_LOWER );
+        //$valid = $this->validateRecipeFields($params);
+        if (1==1) {
+            $results = $this->recipesRepository->findByQuery($query)['results'];
             if (!empty($results)) {
                 $this->normalize($results);
             }
@@ -328,22 +334,39 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * Builds an http query string.
-     * @param array $query  // of key value pairs to be used in the query
-     * @return string       // http query string.
-     **/
-    function build_http_query( $query ){
-
-        $query_array = array();
-
-        foreach( $query as $key => $key_value ){
-
-            $query_array[] = urlencode( $key ) . '=' . urlencode( $key_value );
-
+     * Left/Right wildcard search a recipe.
+     * Ex. - GET /recipes/search?q=pizza&page=1&filter=category&category=Main Dish
+     *
+     *
+     * @param Request $request
+     * @param string $keyword
+     * @return Response
+     * @Route("recipes/search", methods={"GET"}, name="get_search")
+     */
+    public function getSearchPager(Request $request) {
+        // TODO Validate request.
+        $query = $request->query->get('q');
+        $page = $request->query->get('page') ?? null;
+        //TODO Sanitize query remove special chars.
+        $filter = $request->query->get('filter');
+        $category = null;
+        if ($filter) {
+            $category = $request->query->get('category');
         }
-
-        return implode( '&', $query_array );
-
+        $query = str_replace('%20',' ', $query);
+        if (!empty(trim($query))) {
+            $filter = ($category  && $filter) ?  ['category' => $category, 'filter' => $filter] : [];
+            $results = $this->recipesRepository->getSearchByPage($query, $filter, $page)['results'] ?? [];
+            if (!empty($results)) {
+                $this->normalize($results);
+            }
+            $this->validateResponse($results);
+            $this->updateResponseHeader();
+        } else {
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            $this->response->setContent(self::VALIDATION_INVALID_SEARCH_QUERY);
+        }
+        return $this->response;
     }
 
     /**
@@ -357,11 +380,13 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @param string $keyword
      * @return Response
-     * @Route("recipes/search", methods={"GET"}, name="get_search")
+
      */
     public function getSearch(Request $request): Response {
         // TODO Validate request.
         $query = $request->query->get('q');
+        //TODO Sanitize query remove special chars.
+        dump($query);
         $filter = $request->query->get('filter');
         $category = null;
         if ($filter) {

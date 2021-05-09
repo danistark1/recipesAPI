@@ -3,11 +3,13 @@
 namespace App\Repository;
 
 use App\Entity\RecipesEntity;
+use App\RecipesPaginator;
 use App\Utils\RecipiesDateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\ORM\ORMException;
 use Doctrine\ORM\ORMInvalidArgumentException;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Kernel;
 
@@ -195,36 +197,44 @@ class RecipesRepository extends ServiceEntityRepository {
      * @return array
      */
     public function findByQuery(array $params): array {
-        $recipeData = parent::findBy($params,[], 20);
-        return $recipeData;
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+        $result = $qb->select('p')
+            ->from(RecipesEntity::class, 'p')
+            ->where('p.'.$params[0]. '= :value')
+            ->setParameter('value', $params[1])
+            ->getQuery()
+            ->execute();
+            $em->flush();
+        $recipesPaginator = new RecipesPaginator($params['page'], $qb, 2);
+        $paginatedResults = $recipesPaginator->getPaginatedResult();
+        return $paginatedResults;
     }
 
-    public function search($keyword, $filter) {
+    /**
+     * Search
+     *
+     * @param int $page
+     * @return array
+     */
+    public function getSearchByPage($keyword, $filter, $page = 1) {
+
         $qb = $this->getEntityManager()->createQueryBuilder();
 
         $qb->select('re')
             ->from(RecipesEntity::class, 're');
-        $results = $qb->where(
+        $query = $qb->where(
             $qb->expr()->like('re.name', ':name'))->setParameter('name',  '%' . $keyword . '%')
             ->getQuery()
             ->execute();
         if (!empty($filter)) {
-            $results = $qb->andWhere('re.category = :category')->setParameter('category', $filter['category'])
+            $query = $qb->andWhere('re.category = :category')->setParameter('category', $filter['category'])
                 ->getQuery()
                 ->execute();
         }
-//            ->orwhere($qb->expr()->like('re.directions', ':directions'))
-//            ->orwhere($qb->expr()->like('re.category', ':category'))
-//            ->orwhere($qb->expr()->like('re.cuisine', ':cuisine'))
-//            ->orwhere($qb->expr()->like('re.ingredients', ':ingredients'))
-//            ->setParameter('ingredients', $keyword . '%')
-//            ->setParameter('cuisine', $keyword . '%')
-//            ->setParameter('category', $keyword . '%')
-//            ->setParameter('directions', $keyword . '%')
-
-//        $qb->getQuery()
-//            ->execute();
-        return $results;
+        $recipesPaginator = new RecipesPaginator($page, $qb);
+        $paginatedResults = $recipesPaginator->getPaginatedResult();
+        return $paginatedResults;
     }
 
     /**
