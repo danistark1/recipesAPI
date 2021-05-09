@@ -198,6 +198,17 @@ class RecipesRepository extends ServiceEntityRepository {
      * @return array
      */
     public function findByQuery(array $params): array {
+        $recipeData = parent::findBy($params,[], 20);
+        return $recipeData;
+    }
+
+    /**
+     * Find a record.
+     *
+     * @param array $params
+     * @return array
+     */
+    public function findByQueryBuilder(array $params): array {
         $em = $this->getEntityManager();
         $qb = $em->createQueryBuilder();
         $result = $qb->select('p')

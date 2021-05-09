@@ -322,7 +322,7 @@ class RecipesController extends AbstractController {
         $params = array_change_key_case ($params, CASE_LOWER );
         $valid = $this->validateRecipeFields($params);
         if ($valid) {
-            $resultsAll = $this->recipesRepository->findByQuery($query);
+            $resultsAll = $this->recipesRepository->findByQueryBuilder($query);
             $results = $resultsAll['results'] ?? [];
             $pagesCount = $resultsAll['pagesCount'] ?? 0;
             $totalItems = $resultsAll['totalItems'] ?? 0;
