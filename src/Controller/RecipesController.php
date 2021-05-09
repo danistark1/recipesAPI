@@ -317,7 +317,8 @@ class RecipesController extends AbstractController {
         $value = array_values($params);
         $key = array_keys($params);
         $query = array_merge($key, $value);
-        $query['page'] = $page;
+
+        $query['page'] = $page ?? 1;
         $params = array_change_key_case ($params, CASE_LOWER );
         $valid = $this->validateRecipeFields($params);
         if ($valid) {
@@ -351,7 +352,7 @@ class RecipesController extends AbstractController {
     public function getSearchPager(Request $request) {
         // TODO Validate request.
         $query = $request->query->get('q');
-        $page = $request->query->get('page') ?? null;
+        $page = $request->query->get('page') ?? 1;
         //TODO Sanitize query remove special chars.
         $filter = $request->query->get('filter');
         $category = null;
