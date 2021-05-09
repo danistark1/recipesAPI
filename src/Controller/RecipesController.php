@@ -318,10 +318,15 @@ class RecipesController extends AbstractController {
         $key = array_keys($params);
         $query = array_merge($key, $value);
         $query['page'] = $page;
-        //$params = array_change_key_case ($params, CASE_LOWER );
-        //$valid = $this->validateRecipeFields($params);
-        if (1==1) {
-            $results = $this->recipesRepository->findByQuery($query)['results'];
+        $params = array_change_key_case ($params, CASE_LOWER );
+        $valid = $this->validateRecipeFields($params);
+        if ($valid) {
+            $resultsAll = $this->recipesRepository->findByQuery($query);
+            $results = $resultsAll['results'];
+            $pagesCount = $resultsAll['pagesCount'];
+            $totalItems = $resultsAll['totalItems'];
+            $this->response->headers->set('recipes-totalItems', $totalItems);
+            $this->response->headers->set('recipes-pagesCount', $pagesCount);
             if (!empty($results)) {
                 $this->normalize($results);
             }
@@ -356,10 +361,15 @@ class RecipesController extends AbstractController {
         $query = str_replace('%20',' ', $query);
         if (!empty(trim($query))) {
             $filter = ($category  && $filter) ?  ['category' => $category, 'filter' => $filter] : [];
-            $results = $this->recipesRepository->getSearchByPage($query, $filter, $page)['results'] ?? [];
+            $resultsAll = $this->recipesRepository->getSearchByPage($query, $filter, $page)['results'] ?? [];
             if (!empty($results)) {
                 $this->normalize($results);
             }
+            $results = $resultsAll['results'];
+            $pagesCount = $resultsAll['pagesCount'];
+            $totalItems = $resultsAll['totalItems'];
+            $this->response->headers->set('recipes-totalItems', $totalItems);
+            $this->response->headers->set('recipes-pagesCount', $pagesCount);
             $this->validateResponse($results);
             $this->updateResponseHeader();
         } else {

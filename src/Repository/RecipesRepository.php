@@ -38,7 +38,8 @@ class RecipesRepository extends ServiceEntityRepository {
         'calories',
         'cuisine',
         'url',
-        'featured'
+        'featured',
+        'page'
     ];
 
     /**
@@ -206,7 +207,7 @@ class RecipesRepository extends ServiceEntityRepository {
             ->getQuery()
             ->execute();
             $em->flush();
-        $recipesPaginator = new RecipesPaginator($params['page'], $qb, 2);
+        $recipesPaginator = new RecipesPaginator($params['page'], $qb);
         $paginatedResults = $recipesPaginator->getPaginatedResult();
         return $paginatedResults;
     }

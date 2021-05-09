@@ -55,7 +55,7 @@ class RecipesPaginator {
         $paginatedResults = [
             'results' => $results,
             'totalItems' => $totalItems,
-            'totalCount' => $pagesCount
+            'pagesCount' => $pagesCount
         ];
         $this->paginatedResults = $paginatedResults;
     }
