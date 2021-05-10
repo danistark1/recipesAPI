@@ -313,7 +313,7 @@ class RecipesController extends AbstractController {
      *
      * @param Request $request
      * @return Response
-     * @Route("recipes/where", methods={"GET"}, name="get_where")
+     * @Route("recipes/where", methods={"GET", "OPTIONS"}, name="get_where")
      */
     public function getWhere(Request $request): Response {
         // TODO Validate request.
@@ -354,7 +354,7 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @param string $keyword
      * @return Response
-     * @Route("recipes/search", methods={"GET"}, name="get_search")
+     * @Route("recipes/search", methods={"GET", "OPTIONS"}, name="get_search")
      */
     public function getSearchPager(Request $request) {
         // TODO Validate request.
