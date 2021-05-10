@@ -388,45 +388,6 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * Right wildcard search for a recipe.
-     * Ex. - GET /recipes/search?q=pizza
-     *     - GET /recipes/search?q=main dish
-     *
-     * Ex. With filtering
-     *     - GET /recipes/search?q=pizza&filter=category&category=main dish
-     *
-     * @param Request $request
-     * @param string $keyword
-     * @return Response
-
-     */
-    public function getSearch(Request $request): Response {
-        // TODO Validate request.
-        $query = $request->query->get('q');
-        //TODO Sanitize query remove special chars.
-        dump($query);
-        $filter = $request->query->get('filter');
-        $category = null;
-        if ($filter) {
-            $category = $request->query->get('category');
-        }
-        $query = str_replace('%20',' ', $query);
-        if (!empty(trim($query))) {
-            $filter = ($category  && $filter) ?  ['category' => $category, 'filter' => $filter] : [];
-            $results = $this->recipesRepository->search($query, $filter);
-            if (!empty($results)) {
-                $this->normalize($results);
-            }
-            $this->validateResponse($results);
-            $this->updateResponseHeader();
-        } else {
-            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-            $this->response->setContent(self::VALIDATION_INVALID_SEARCH_QUERY);
-        }
-        return $this->response;
-    }
-
-    /**
      * Parse string into a usable array.
      *
      * @param string $data
