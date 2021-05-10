@@ -9,6 +9,7 @@ use App\RecipesPostSchema;
 use App\RecipesUpdateSchema;
 use App\Repository\RecipesRepository;
 use App\RecipesLogger;
+use App\Repository\RecipesTagsRepository;
 use Monolog\Logger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -72,6 +73,9 @@ class RecipesController extends AbstractController {
     /** @var RecipesRepository|null  */
     private $recipesRepository;
 
+    /** @var RecipesTagsRepository  */
+    private $recipesTagsRepository;
+
     /** @var float|string Capture response execution time */
     private $time_start;
 
@@ -87,6 +91,7 @@ class RecipesController extends AbstractController {
      */
     public function __construct(
         RecipesRepository $recipesRepository,
+        RecipesTagsRepository $recipesTagsRepository,
         RecipesLogger $logger,
         ObjectNormalizer $objectNormalizer) {
         $this->response  = new Response();
@@ -100,6 +105,7 @@ class RecipesController extends AbstractController {
         $this->request  = new Request();
         $this->logger = $logger;
         $this->recipesRepository = $recipesRepository;
+        $this->recipesTagsRepository = $recipesTagsRepository;
         $this->time_start = microtime(true);
     }
 
@@ -475,6 +481,10 @@ class RecipesController extends AbstractController {
             $pascalEm = $this->normalizeRecipeData($pascalEm);
             $recipeID = $this->recipesRepository->save($pascalEm);
             if ($recipeID) {
+                if (isset($pascalEm['tags'])) {
+                    $recipe = $this->getByIdInternal($recipeID, true)[0];
+                    $this->postTagsInternal($pascalEm['tags'], $recipe);
+                }
                 $this->response->setStatusCode(self::STATUS_OK);
                 // Return posted data back.(use get to normalize ingredients array).
                 $this->getByIdInternal($recipeID);
@@ -485,6 +495,14 @@ class RecipesController extends AbstractController {
             $this->updateResponseHeader();
         }
         return $this->response;
+    }
+
+    /**
+     * Post recipe tags.
+     *
+     */
+    private function postTagsInternal(array $tags, $recipe) {
+        $this->recipesTagsRepository->save($tags, $recipe);
     }
 
     /**

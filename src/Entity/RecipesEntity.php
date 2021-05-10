@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RecipesRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 
@@ -89,6 +91,16 @@ class RecipesEntity {
      * @ORM\Column(type="boolean", nullable=false)
      */
     private $featured;
+
+    /**
+     * @ORM\OneToMany(targetEntity=RecipesTags::class, mappedBy="recipe")
+     */
+    private $recipesTags;
+
+    public function __construct()
+    {
+        $this->recipesTags = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -259,6 +271,36 @@ class RecipesEntity {
     public function setFeatured(?bool $featured): self
     {
         $this->featured = $featured;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|RecipesTags[]
+     */
+    public function getRecipesTags(): Collection
+    {
+        return $this->recipesTags;
+    }
+
+    public function addRecipesTag(RecipesTags $recipesTag): self
+    {
+        if (!$this->recipesTags->contains($recipesTag)) {
+            $this->recipesTags[] = $recipesTag;
+            $recipesTag->setRecipe($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecipesTag(RecipesTags $recipesTag): self
+    {
+        if ($this->recipesTags->removeElement($recipesTag)) {
+            // set the owning side to null (unless already changed)
+            if ($recipesTag->getRecipe() === $this) {
+                $recipesTag->setRecipe(null);
+            }
+        }
 
         return $this;
     }

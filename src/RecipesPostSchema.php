@@ -38,6 +38,7 @@ class RecipesPostSchema {
                 'ingredients' => [new Assert\Length(['min' => 3])],
                 'url' => new Assert\Optional([new Assert\Length(['min' => 3]), new Assert\NotBlank]),
                 'featured' => new Assert\Optional(new Assert\Type('bool')),
+                'tags' => new Assert\Optional(new Assert\Type('array')),
             ]);
         }
     }
