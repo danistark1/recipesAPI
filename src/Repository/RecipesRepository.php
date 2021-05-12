@@ -24,7 +24,7 @@ class RecipesRepository extends ServiceEntityRepository {
     /**
      * Valid recipe fields.
      */
-    private const VALID_FIELDS = [
+    public const VALID_FIELDS = [
         'id',
         'name',
         'prepTime',
@@ -240,7 +240,9 @@ class RecipesRepository extends ServiceEntityRepository {
             ->getQuery()
             ->execute();
         if (!empty($filter)) {
-            $query = $qb->andWhere('re.category = :category')->setParameter('category', $filter['category'])
+//            dump($filter['field']);
+//            dump($filter['value']);
+            $query = $qb->andWhere("re.{$filter['field']} = :field")->setParameter('field', $filter['value'])
                 ->getQuery()
                 ->execute();
         }

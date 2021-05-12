@@ -39,6 +39,7 @@ class RecipesController extends AbstractController {
     const VALIDATION_NO_RECORD = "No record found.";
     const VALIDATION_STATION_PARAMS = "Invalid post parameters.";
     const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q={searchTerm}";
+    const VALIDATION_INVALID_SEARCH_FILTER = "Invalid search filter provided.";
 
     const CATEGORY_DESSERT = 'dessert';
     const CATEGORY_SALAD = 'salad';
@@ -361,14 +362,21 @@ class RecipesController extends AbstractController {
         $query = $request->query->get('q');
         $page = $request->query->get('page') ?? 1;
         //TODO Sanitize query remove special chars.
-        $filter = $request->query->get('filter');
-        $category = null;
-        if ($filter) {
-            $category = $request->query->get('category');
+        $field = $request->query->get('filter');
+        $value = null;
+        if ($field) {
+            $validFields = RecipesRepository::VALID_FIELDS;
+            if (!in_array($field, $validFields)) {
+                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+                $this->response->setContent(self::VALIDATION_INVALID_SEARCH_FILTER);
+                return $this->response;
+            }
+            $value = $request->query->get('value');
         }
+
         $query = str_replace('%20',' ', $query);
         if (!empty(trim($query))) {
-            $filter = ($category  && $filter) ?  ['category' => $category, 'filter' => $filter] : [];
+            $filter = ($field  && $value) ?  ['field' => $field, 'value' => $value] : [];
             $resultsAll = $this->recipesRepository->getSearchByPage($query, $filter, $page) ?? [];
             $results = $resultsAll['results'];
             $pagesCount = $resultsAll['pagesCount'] ?? 0;
@@ -381,8 +389,7 @@ class RecipesController extends AbstractController {
             $this->validateResponse($results);
             $this->updateResponseHeader();
         } else {
-            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-            $this->response->setContent(self::VALIDATION_INVALID_SEARCH_QUERY);
+            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
         }
         return $this->response;
     }
@@ -533,6 +540,7 @@ class RecipesController extends AbstractController {
             }
             $normalizedData += [$param => $value];
         }
+        $normalizedData['directions'] = ucfirst($normalizedData['directions']);
         $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
         $normalizedData['addedBy'] = $normalizedData['addedBy'] ?? '';
         $normalizedData['prepTime'] = $normalizedData['prepTime'] ?? null;
