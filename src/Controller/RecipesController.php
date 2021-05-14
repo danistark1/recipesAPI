@@ -348,12 +348,11 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * Left/Right wildcard search a recipe.
-     * Ex. - GET /recipes/search?q=pizza&page=1&filter=category&category=Main Dish
+     * Left/Right wildcard search a recipe. Returns a paginated search result.
+     * Ex. - GET /recipes/search?q=pizza&page=1&filter={field}&{field}=Main Dish
      *
      *
      * @param Request $request
-     * @param string $keyword
      * @return Response
      * @Route("recipes/search", methods={"GET", "OPTIONS", "HEAD"}, name="get_search")
      */
@@ -373,10 +372,14 @@ class RecipesController extends AbstractController {
             }
             $value = $request->query->get('value');
         }
-
         $query = str_replace('%20',' ', $query);
         if (!empty(trim($query))) {
-            $filter = ($field  && $value) ?  ['field' => $field, 'value' => $value] : [];
+            // We should be able to use the search without any filter, set to empty array by defautl.
+            // getSearchByPage will ignore empty filters.
+            $filter = [];
+            if (!empty($field) && !empty($value)) {
+                $filter =  ['field' => $field, 'value' => $value];
+            }
             $resultsAll = $this->recipesRepository->getSearchByPage($query, $filter, $page) ?? [];
             $results = $resultsAll['results'];
             $pagesCount = $resultsAll['pagesCount'] ?? 0;

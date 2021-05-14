@@ -240,8 +240,6 @@ class RecipesRepository extends ServiceEntityRepository {
             ->getQuery()
             ->execute();
         if (!empty($filter)) {
-//            dump($filter['field']);
-//            dump($filter['value']);
             $query = $qb->andWhere("re.{$filter['field']} = :field")->setParameter('field', $filter['value'])
                 ->getQuery()
                 ->execute();
