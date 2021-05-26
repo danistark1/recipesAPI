@@ -422,13 +422,13 @@ class RecipesController extends AbstractController {
      * @param array|RecipesEntity $result
      * @param string $recipeIdentifier
      */
-    private function validateResponse($result, $recipeIdentifier = '') {
-        $response = !empty($result) ? $this->serializer->serialize($result, 'json') : '';
+    private function validateResponse($result, string $recipeIdentifier = '') {
+        $response = $this->serializer->serialize($result, 'json');
         if (empty($response)) {
             $this->response->setStatusCode(404);
             $this->response->headers->set('recipes-totalItems', 0);
             $this->response->headers->set('recipes-pagesCount', 0);
-            $this->response->setContent(self::VALIDATION_NO_RECORD);
+            $this->response->setContent($response);
             $this->logger->log(self::VALIDATION_NO_RECORD, ['id' => $recipeIdentifier], Logger::INFO);
         } else {
             $this->response->setContent($response);
@@ -446,10 +446,10 @@ class RecipesController extends AbstractController {
      */
     public function post(Request $request, ValidatorInterface $validator, RecipesPostSchema $recipesPostSchema): Response {
         $pascalEm = (array)json_decode($request->getContent(), true);
+        $pascalEm = $this->normalizeRecipeData($pascalEm);
         $violations = $validator->validate($pascalEm, $recipesPostSchema::$schema);
         $valid = $this->validateRequest($violations);
         if ($valid) {
-            $pascalEm = $this->normalizeRecipeData($pascalEm);
             $recipeID = $this->recipesRepository->save($pascalEm);
             if ($recipeID) {
                 if (isset($pascalEm['tags'])) {
@@ -543,15 +543,16 @@ class RecipesController extends AbstractController {
             }
             $normalizedData += [$param => $value];
         }
+
         $normalizedData['directions'] = ucfirst($normalizedData['directions']);
         $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
-        $normalizedData['addedBy'] = $normalizedData['addedBy'] ?? '';
-        $normalizedData['prepTime'] = $normalizedData['prepTime'] ?? null;
-        $normalizedData['cookingTime'] = $normalizedData['cookingTime'] ?? null;
+        $normalizedData['addedBy'] = empty($normalizedData['addedBy']) ? null : $normalizedData['addedBy'];
+        $normalizedData['prepTime'] = empty($normalizedData['prepTime']) ? null : $normalizedData['prepTime'];
+        $normalizedData['cookingTime'] = empty($normalizedData['cookingTime']) ? null : $normalizedData['cookingTime'];
         $normalizedData['calories'] = $normalizedData['calories'] ?? 'NA';
-        $normalizedData['cuisine'] = $normalizedData['cuisine'] ?? '';
+        $normalizedData['cuisine'] = empty($normalizedData['cuisine']) ? null : $normalizedData['cuisine'];
         $normalizedData['url'] = $normalizedData['url'] ?? '';
-        $normalizedData['servings'] = $normalizedData['servings'] ?? '';
+        $normalizedData['servings'] = empty($normalizedData['servings']) ? null : $normalizedData['servings'];
         $normalizedData['featured'] = $normalizedData['featured'] ?? false;
         return $normalizedData;
     }

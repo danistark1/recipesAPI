@@ -28,7 +28,7 @@ class RecipesPostSchema {
                 'name' => [new Assert\Length(['min' => 3])],
                 'prepTime' =>  new Assert\Optional([new Assert\Length(['min' => 3])]),
                 'cookingTime' => new Assert\Optional([new Assert\Length(['min' => 3])]),
-                'servings' => new Assert\Optional([new Assert\Length(['min' => 1])]),
+                'servings' => new Assert\Optional(),
                 'category' => [new Assert\Length(['min' => 3])],
                 'directions' => [new Assert\Length(['min' => 3])],
                 'favourites' => [new Assert\Optional([new Assert\PositiveOrZero()])],
