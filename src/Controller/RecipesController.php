@@ -12,6 +12,8 @@ use App\RecipesLogger;
 use App\Repository\RecipesTagsRepository;
 use Monolog\Logger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -436,6 +438,35 @@ class RecipesController extends AbstractController {
         }
     }
 
+    /**
+     * * @Route("recipes/upload",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
+     */
+    public function postFile(Request $request) {
+        // Type FileBag
+        /** @var FileBag $requestFile */
+        $requestFile = $request->files;
+        // Type uploaded file
+        /** @var UploadedFile $file */
+        $file = $requestFile->get('file');
+        if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) ) {
+            $this->response->setStatusCode(self::VALIDATION_FAILED);
+            $this->response->setContent('Invalid image.');
+        }
+
+        //$mimeType = $file->getClientMimeType();
+        //$pos = strpos($mimeType, '/');
+        //$fileType = substr($mimeType, $pos + 1);
+        $fileName = $file->getClientOriginalName();
+        //$fileSize = $file->getSize();
+        $fileContent = $file->getContent();
+        file_put_contents('public' . $fileName, $fileContent);
+        return $this->response;
+    }
+
+    public function getFile(Request $request) {
+
+    }
+    
     /**
      * Post a recipe.
      *
