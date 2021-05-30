@@ -5,13 +5,17 @@ namespace App\Controller;
 use App\CategorySchema;
 use App\Entity\CategoriesEntity;
 use App\Entity\RecipesEntity;
+use App\Kernel;
+use App\RecipesCacheHandler;
 use App\RecipesPostSchema;
 use App\RecipesUpdateSchema;
+use App\Repository\RecipesMediaRepository;
 use App\Repository\RecipesRepository;
 use App\RecipesLogger;
 use App\Repository\RecipesTagsRepository;
 use Monolog\Logger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
@@ -439,35 +443,6 @@ class RecipesController extends AbstractController {
     }
 
     /**
-     * * @Route("recipes/upload",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
-     */
-    public function postFile(Request $request) {
-        // Type FileBag
-        /** @var FileBag $requestFile */
-        $requestFile = $request->files;
-        // Type uploaded file
-        /** @var UploadedFile $file */
-        $file = $requestFile->get('file');
-        if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) ) {
-            $this->response->setStatusCode(self::VALIDATION_FAILED);
-            $this->response->setContent('Invalid image.');
-        }
-
-        //$mimeType = $file->getClientMimeType();
-        //$pos = strpos($mimeType, '/');
-        //$fileType = substr($mimeType, $pos + 1);
-        $fileName = $file->getClientOriginalName();
-        //$fileSize = $file->getSize();
-        $fileContent = $file->getContent();
-        file_put_contents('public' . $fileName, $fileContent);
-        return $this->response;
-    }
-
-    public function getFile(Request $request) {
-
-    }
-    
-    /**
      * Post a recipe.
      *
      * @Route("recipes",  methods={"POST", "OPTIONS"}, name="post_recipes")
@@ -496,6 +471,84 @@ class RecipesController extends AbstractController {
             }
             $this->updateResponseHeader();
         }
+        return $this->response;
+    }
+
+    /**
+     * $id The ID of the foreign record you are attaching media to.
+     *
+     * @Route("recipes/upload/{id}",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
+     * @return Response
+     */
+    public function postFile($id, Request $request, RecipesMediaRepository $mediaRepository,  RecipesCacheHandler $config) {
+        $valid = $this->validateFileRequest($request, $config);
+        if ($valid) {
+            /** @var FileBag $requestFile */
+            $requestFile = $request->files;
+            $file = $requestFile->get('file');
+            $mimeType = $file->getClientMimeType();
+            $fileName = $file->getClientOriginalName();
+            $filePath = "public/{$fileName}";
+            $fileSize = $file->getSize();
+            $fileContent = $file->getContent();
+            $result = file_put_contents($fileName, $fileContent);
+            if (is_int($result)) {
+                $fileData = [
+                    'name' => $fileName,
+                    'path' => $filePath,
+                    'type' => $mimeType,
+                    'size' => $fileSize,
+                    'foreignID' => $id,
+                    'foreignTable' => 'recipesEntity'
+                ];
+                $result = $mediaRepository->save($fileData);
+            }
+            else {
+                $this->response->setContent('Failed writing image to disk.');
+                $this->response->setStatusCode(self::VALIDATION_FAILED);
+            }
+        }
+
+        return $this->response;
+    }
+
+    private function validateFileRequest(Request $request, RecipesCacheHandler $config) {
+        $valid = true;
+        $allowedExtensions = $config->getConfigKey('allowed-extensions');
+        $allowedExtensions = explode(',', $allowedExtensions);
+        // Type FileBag
+        /** @var FileBag $requestFile */
+        $requestFile = $request->files;
+        // Type uploaded file
+        /** @var UploadedFile $file */
+        $file = $requestFile->get('file');
+        if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) ) {
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            $this->response->setContent('Invalid image.');
+            $valid = false;
+        }
+
+        $mimeType = $file->getClientMimeType();
+        $pos = strpos($mimeType, '/');
+        $fileType = substr($mimeType, $pos + 1);
+        if (!in_array($fileType, $allowedExtensions)) {
+            $this->response->setContent('File type not allowed');
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            $valid = false;
+        }
+        return $valid;
+    }
+
+    /**
+     * @param $id
+     * @param Request $request
+     * @Route("recipes/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
+     */
+    public function getFile($id, Request $request, Kernel $kernel, RecipesMediaRepository $recipesMediaRepository): Response {
+        $webPath = $kernel->getProjectDir() . '/public/';
+        $results = $recipesMediaRepository->findByQuery(['foreignID' => $id])[0];
+        $name= $results->getName();
+        $this->response->setContent($webPath.$name);
         return $this->response;
     }
 
@@ -574,17 +627,18 @@ class RecipesController extends AbstractController {
             }
             $normalizedData += [$param => $value];
         }
-
-        $normalizedData['directions'] = ucfirst($normalizedData['directions']);
-        $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
-        $normalizedData['addedBy'] = empty($normalizedData['addedBy']) ? null : $normalizedData['addedBy'];
-        $normalizedData['prepTime'] = empty($normalizedData['prepTime']) ? null : $normalizedData['prepTime'];
-        $normalizedData['cookingTime'] = empty($normalizedData['cookingTime']) ? null : $normalizedData['cookingTime'];
-        $normalizedData['calories'] = $normalizedData['calories'] ?? 'NA';
-        $normalizedData['cuisine'] = empty($normalizedData['cuisine']) ? null : $normalizedData['cuisine'];
-        $normalizedData['url'] = $normalizedData['url'] ?? '';
-        $normalizedData['servings'] = empty($normalizedData['servings']) ? null : $normalizedData['servings'];
-        $normalizedData['featured'] = $normalizedData['featured'] ?? false;
+        if (!empty($normalizedData)) {
+            $normalizedData['directions'] = ucfirst($normalizedData['directions']);
+            $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
+            $normalizedData['addedBy'] = empty($normalizedData['addedBy']) ? null : $normalizedData['addedBy'];
+            $normalizedData['prepTime'] = empty($normalizedData['prepTime']) ? null : $normalizedData['prepTime'];
+            $normalizedData['cookingTime'] = empty($normalizedData['cookingTime']) ? null : $normalizedData['cookingTime'];
+            $normalizedData['calories'] = $normalizedData['calories'] ?? 'NA';
+            $normalizedData['cuisine'] = empty($normalizedData['cuisine']) ? null : $normalizedData['cuisine'];
+            $normalizedData['url'] = $normalizedData['url'] ?? '';
+            $normalizedData['servings'] = empty($normalizedData['servings']) ? null : $normalizedData['servings'];
+            $normalizedData['featured'] = $normalizedData['featured'] ?? false;
+        }
         return $normalizedData;
     }
 
