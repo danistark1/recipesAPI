@@ -475,12 +475,17 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Post a file.
+     *
+     *  POST: recipes/upload/{id} where $id is a recipe's primary key
+     *
      * $id The ID of the foreign record you are attaching media to.
      *
      * @Route("recipes/upload/{id}",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
      * @return Response
+     * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function postFile($id, Request $request, RecipesMediaRepository $mediaRepository,  RecipesCacheHandler $config) {
+    public function postFile($id, Request $request, RecipesMediaRepository $mediaRepository,  RecipesCacheHandler $config): Response {
         $valid = $this->validateFileRequest($request, $config);
         if ($valid) {
             /** @var FileBag $requestFile */
@@ -488,10 +493,15 @@ class RecipesController extends AbstractController {
             $file = $requestFile->get('file');
             $mimeType = $file->getClientMimeType();
             $fileName = $file->getClientOriginalName();
+            $fileName = rand(1,1000000000).$fileName;
             $filePath = "public/{$fileName}";
             $fileSize = $file->getSize();
+            $fileSize = $fileSize/1000000;
             $fileContent = $file->getContent();
             $result = file_put_contents($fileName, $fileContent);
+
+            //TODO Validate {$id} is for an actual recipe to prevent orphaned records.
+
             if (is_int($result)) {
                 $fileData = [
                     'name' => $fileName,
@@ -502,6 +512,10 @@ class RecipesController extends AbstractController {
                     'foreignTable' => 'recipesEntity'
                 ];
                 $result = $mediaRepository->save($fileData);
+                if (!$result) {
+                    $this->response->setContent('Failed inserting image data into recipesMedia.');
+                    $this->response->setStatusCode(self::VALIDATION_FAILED);
+                }
             }
             else {
                 $this->response->setContent('Failed writing image to disk.');
@@ -512,7 +526,15 @@ class RecipesController extends AbstractController {
         return $this->response;
     }
 
-    private function validateFileRequest(Request $request, RecipesCacheHandler $config) {
+    /**
+     * Validate fileRequest.
+     *
+     * @param Request $request
+     * @param RecipesCacheHandler $config
+     * @return bool
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
+    private function validateFileRequest(Request $request, RecipesCacheHandler $config): bool {
         $valid = true;
         $allowedExtensions = $config->getConfigKey('allowed-extensions');
         $allowedExtensions = explode(',', $allowedExtensions);
@@ -522,12 +544,11 @@ class RecipesController extends AbstractController {
         // Type uploaded file
         /** @var UploadedFile $file */
         $file = $requestFile->get('file');
-        if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) ) {
+        if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) || !$file) {
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $this->response->setContent('Invalid image.');
             $valid = false;
         }
-
         $mimeType = $file->getClientMimeType();
         $pos = strpos($mimeType, '/');
         $fileType = substr($mimeType, $pos + 1);
@@ -536,10 +557,20 @@ class RecipesController extends AbstractController {
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $valid = false;
         }
+        $maxFileSize = $config->getConfigKey('max-file-size');
+        $fileSize = $file->getSize();
+        $fileSize = $fileSize/1000000;
+        if ($fileSize >= $maxFileSize) {
+            $valid = false;
+            $this->response->setContent("File size is greater than the defined max file size of $maxFileSize.");
+            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+        }
         return $valid;
     }
 
     /**
+     * Get a file.
+     *
      * @param $id
      * @param Request $request
      * @Route("recipes/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
