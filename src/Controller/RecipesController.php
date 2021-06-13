@@ -541,6 +541,27 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Convert size.
+     *
+     * @param $bytes
+     * @param string $conversion
+     * @return mixed|string
+     */
+    public function byteConversion($bytes, string $conversion = 'MB') {
+        switch ($conversion) {
+            case 'MB':
+                $bytes = number_format($bytes / 1048576, 2);
+                break;
+            case 'KB':
+                $bytes = number_format($bytes / 1024, 2);
+                break;
+            case 'GB':
+                $bytes = number_format($bytes / 1073741824, 2);
+        }
+            return $bytes;
+        }
+
+    /**
      * Post a file.
      *
      *  POST: recipes/upload/{id} where $id is a recipe's primary key
@@ -562,7 +583,7 @@ class RecipesController extends AbstractController {
             $fileName = rand(1, 1000000000).'recipeIMG';
             $filePath = "public/{$fileName}";
             $fileSize = $file->getSize();
-            $fileSize = $fileSize/1000000;
+            $fileSize = $this->byteConversion($fileSize);
             $fileContent = $file->getContent();
             $result = file_put_contents($fileName, $fileContent);
 
