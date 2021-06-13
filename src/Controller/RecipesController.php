@@ -478,6 +478,7 @@ class RecipesController extends AbstractController {
      * Post a file.
      *
      *  POST: recipes/upload/{id} where $id is a recipe's primary key
+     *  Access on the server :http://.../recipesAPI/public/{imageName}
      *
      * $id The ID of the foreign record you are attaching media to.
      *
@@ -536,7 +537,7 @@ class RecipesController extends AbstractController {
      */
     private function validateFileRequest(Request $request, RecipesCacheHandler $config): bool {
         $valid = true;
-        $allowedExtensions = $config->getConfigKey('allowed-extensions');
+        $allowedExtensions = $config->getConfigKey('allowed-extensions') ?? 'gif,jpg,jpeg';
         $allowedExtensions = explode(',', $allowedExtensions);
         // Type FileBag
         /** @var FileBag $requestFile */
@@ -548,23 +549,26 @@ class RecipesController extends AbstractController {
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $this->response->setContent('Invalid image.');
             $valid = false;
+        } else {
+            $mimeType = $file->getClientMimeType();
+            $pos = strpos($mimeType, '/');
+            $fileType = substr($mimeType, $pos + 1);
+            if (!in_array($fileType, $allowedExtensions)) {
+                $this->response->setContent('File type not allowed');
+                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+                $valid = false;
+            }
+            $maxFileSize = $config->getConfigKey('max-file-size');
+            $fileSize = $file->getSize();
+            $fileSize = $fileSize/1000000;
+            if ($fileSize >= $maxFileSize) {
+                $valid = false;
+                $this->response->setContent("File size is greater than the defined max file size of $maxFileSize.");
+                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+            }
+
         }
-        $mimeType = $file->getClientMimeType();
-        $pos = strpos($mimeType, '/');
-        $fileType = substr($mimeType, $pos + 1);
-        if (!in_array($fileType, $allowedExtensions)) {
-            $this->response->setContent('File type not allowed');
-            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-            $valid = false;
-        }
-        $maxFileSize = $config->getConfigKey('max-file-size');
-        $fileSize = $file->getSize();
-        $fileSize = $fileSize/1000000;
-        if ($fileSize >= $maxFileSize) {
-            $valid = false;
-            $this->response->setContent("File size is greater than the defined max file size of $maxFileSize.");
-            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-        }
+
         return $valid;
     }
 
