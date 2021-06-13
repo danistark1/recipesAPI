@@ -612,6 +612,7 @@ class RecipesController extends AbstractController {
         /** @var UploadedFile $file */
         $file = $requestFile->get('file');
         if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) || !$file) {
+            $this->logger->log('Invalid image.', ['file' => $file], Logger::CRITICAL);
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $this->response->setContent('Invalid image.');
             $valid = false;
@@ -620,6 +621,7 @@ class RecipesController extends AbstractController {
             $pos = strpos($mimeType, '/');
             $fileType = substr($mimeType, $pos + 1);
             if (!in_array($fileType, $allowedExtensions)) {
+                $this->logger->log('File type not allowed.', ['file' => $file], Logger::CRITICAL);
                 $this->response->setContent('File type not allowed');
                 $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
                 $valid = false;
@@ -629,12 +631,12 @@ class RecipesController extends AbstractController {
             $fileSize = $fileSize/1000000;
             if ($fileSize >= $maxFileSize) {
                 $valid = false;
+                $this->logger->log("File size is greater than the defined max file size of $maxFileSize.", ['file' => $file], Logger::CRITICAL);
                 $this->response->setContent("File size is greater than the defined max file size of $maxFileSize.");
                 $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             }
 
         }
-
         return $valid;
     }
 
