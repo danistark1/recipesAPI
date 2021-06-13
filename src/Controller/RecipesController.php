@@ -435,7 +435,7 @@ class RecipesController extends AbstractController {
         /** @var  RecipesEntity $result */
         $results = $this->recipesMediaRepository->findByQuery(['foreignID' => $result->getID()]);
         if (!empty($results)) {
-            $webPath = $this->kernel->getProjectDir() . '/public/';
+            //$webPath = $this->kernel->getProjectDir() . '/public/';
             $results = $results[0];
             $name = $results->getName();
             $imageUrl = "http://192.168.4.10/recipesAPI/public/$name";
@@ -459,7 +459,8 @@ class RecipesController extends AbstractController {
         if (!empty($record)) {
             $results = $recipesMediaRepository->findByQuery(['foreignID' => $id])[0];
             $name = $results->getName();
-            $this->response->setContent($webPath.$name);
+            $imageUrl = "http://192.168.4.10/recipesAPI/public/$name";
+            $this->response->setContent($imageUrl);
         } else {
             $this->response->setContent("Record with id $id does not exist.");
             $this->response->setStatusCode(self::STATUS_NOT_FOUND);
@@ -558,8 +559,7 @@ class RecipesController extends AbstractController {
             $requestFile = $request->files;
             $file = $requestFile->get('file');
             $mimeType = $file->getClientMimeType();
-            $fileName = $file->getClientOriginalName();
-            $fileName = rand(1, 1000000000).$fileName;
+            $fileName = rand(1, 1000000000).'recipeIMG';
             $filePath = "public/{$fileName}";
             $fileSize = $file->getSize();
             $fileSize = $fileSize/1000000;
