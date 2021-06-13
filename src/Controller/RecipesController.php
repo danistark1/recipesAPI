@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\CategorySchema;
 use App\Entity\CategoriesEntity;
 use App\Entity\RecipesEntity;
+use App\Entity\RecipesMediaEntity;
 use App\Kernel;
 use App\RecipesCacheHandler;
 use App\RecipesPostSchema;
@@ -89,6 +90,12 @@ class RecipesController extends AbstractController {
     /** @var Serializer  */
     private $serializer;
 
+    /** @var Kernel */
+    private $kernel;
+
+    /** @var RecipesMediaRepository */
+    private $recipesMediaRepository;
+
     /**
      * SensorController constructor.
      *
@@ -100,11 +107,15 @@ class RecipesController extends AbstractController {
         RecipesRepository $recipesRepository,
         RecipesTagsRepository $recipesTagsRepository,
         RecipesLogger $logger,
-        ObjectNormalizer $objectNormalizer) {
+        ObjectNormalizer $objectNormalizer,
+        RecipesMediaRepository $recipesMediaRepository,
+        Kernel $kernel) {
         $this->response  = new Response();
 
         $encoders = [new JsonEncoder()];
         $normalizers = [$objectNormalizer];
+        $this->kernel =  $kernel;
+        $this->recipesMediaRepository = $recipesMediaRepository;
 
         $this->serializer = new Serializer($normalizers, $encoders);
         $this->response->headers->set('Content-Type', 'application/json');
@@ -142,6 +153,11 @@ class RecipesController extends AbstractController {
         $valid = !empty($name);
         if ($valid) {
             $results = $this->recipesRepository->findByQuery(['name' => $name]);
+            if (!empty($results)) {
+                foreach($results as $result) {
+                    $this->getFileInternal($result);
+                }
+            }
             $this->normalize($results);
             $this->validateResponse($results, $name);
         }
@@ -341,6 +357,9 @@ class RecipesController extends AbstractController {
             $totalItems = $resultsAll['totalItems'] ?? 0;
 
             if (!empty($results)) {
+                foreach($results as $result) {
+                    $this->getFileInternal($result);
+                }
                 $this->normalize($results);
                 $this->response->headers->set('recipes-totalItems', $totalItems);
                 $this->response->headers->set('recipes-pagesCount', $pagesCount);
@@ -362,7 +381,7 @@ class RecipesController extends AbstractController {
      * @return Response
      * @Route("recipes/search", methods={"GET", "OPTIONS", "HEAD"}, name="get_search")
      */
-    public function getSearchPager(Request $request) {
+    public function getSearchPager(Request $request): Response {
         // TODO Validate request.
         $query = $request->query->get('q');
         $page = $request->query->get('page') ?? 1;
@@ -392,6 +411,10 @@ class RecipesController extends AbstractController {
             $totalItems = $resultsAll['totalItems'] ?? 0;
             if (!empty($results)) {
                 $this->normalize($results);
+                // Get recipes images. Adds imageUrl to returned array if an image exists.
+                foreach($results as $result) {
+                    $this->getFileInternal($result);
+                }
                 $this->response->headers->set('recipes-totalItems', $totalItems);
                 $this->response->headers->set('recipes-pagesCount', $pagesCount);
             }
@@ -402,6 +425,47 @@ class RecipesController extends AbstractController {
         }
         return $this->response;
     }
+
+    /**
+     * Get recipe attached file internally.
+     *
+     * @param $id
+     */
+    public function getFileInternal(&$result) {
+        /** @var  RecipesEntity $result */
+        $results = $this->recipesMediaRepository->findByQuery(['foreignID' => $result->getID()]);
+        if (!empty($results)) {
+            $webPath = $this->kernel->getProjectDir() . '/public/';
+            $results = $results[0];
+            $name = $results->getName();
+            $result->setImageUrl($webPath.$name);
+        } else {
+            $result->setImageUrl('');
+        }
+    }
+
+    /**
+     * Get a file using the API.
+     *
+     * @param $id
+     * @param Request $request
+     * @Route("recipes/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
+     */
+    public function getFile($id, Request $request, Kernel $kernel, RecipesMediaRepository $recipesMediaRepository): Response {
+        $webPath = $kernel->getProjectDir() . '/public/';
+        // TODO Validate Id exists.
+        $record = $this->getByIdInternal($id, true);
+        if (!empty($record)) {
+            $results = $recipesMediaRepository->findByQuery(['foreignID' => $id])[0];
+            $name = $results->getName();
+            $this->response->setContent($webPath.$name);
+        } else {
+            $this->response->setContent("Record with id $id does not exist.");
+            $this->response->setStatusCode(self::STATUS_NOT_FOUND);
+        }
+        return $this->response;
+    }
+
 
     /**
      * Parse string into a usable array.
@@ -570,21 +634,6 @@ class RecipesController extends AbstractController {
         }
 
         return $valid;
-    }
-
-    /**
-     * Get a file.
-     *
-     * @param $id
-     * @param Request $request
-     * @Route("recipes/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
-     */
-    public function getFile($id, Request $request, Kernel $kernel, RecipesMediaRepository $recipesMediaRepository): Response {
-        $webPath = $kernel->getProjectDir() . '/public/';
-        $results = $recipesMediaRepository->findByQuery(['foreignID' => $id])[0];
-        $name= $results->getName();
-        $this->response->setContent($webPath.$name);
-        return $this->response;
     }
 
     /**
