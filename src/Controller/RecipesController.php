@@ -612,7 +612,10 @@ class RecipesController extends AbstractController {
         /** @var UploadedFile $file */
         $file = $requestFile->get('file');
         if (!($requestFile instanceof FileBag) || !($file instanceof UploadedFile) || !$file) {
-            $this->logger->log('Invalid image.', ['file' => $file], Logger::CRITICAL);
+            $this->logger->log('Invalid image.', [
+                'file' => $file,
+                'requestFile' => $requestFile,
+                'request' => $request], Logger::CRITICAL);
             $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             $this->response->setContent('Invalid image.');
             $valid = false;
