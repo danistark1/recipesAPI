@@ -558,7 +558,7 @@ class RecipesController extends AbstractController {
             $file = $requestFile->get('file');
             $mimeType = $file->getClientMimeType();
             $fileName = $file->getClientOriginalName();
-            $fileName = rand(1,1000000000).$fileName;
+            $fileName = rand(1, 1000000000).$fileName;
             $filePath = "public/{$fileName}";
             $fileSize = $file->getSize();
             $fileSize = $fileSize/1000000;
@@ -578,11 +578,13 @@ class RecipesController extends AbstractController {
                 ];
                 $result = $mediaRepository->save($fileData);
                 if (!$result) {
+                    $this->logger->log('Failed inserting image data into recipesMedia.', ['result' => $result], Logger::CRITICAL);
                     $this->response->setContent('Failed inserting image data into recipesMedia.');
                     $this->response->setStatusCode(self::VALIDATION_FAILED);
                 }
             }
             else {
+                $this->logger->log('Failed writing image to disk.', ['result' => $result], Logger::CRITICAL);
                 $this->response->setContent('Failed writing image to disk.');
                 $this->response->setStatusCode(self::VALIDATION_FAILED);
             }
