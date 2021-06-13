@@ -438,7 +438,8 @@ class RecipesController extends AbstractController {
             $webPath = $this->kernel->getProjectDir() . '/public/';
             $results = $results[0];
             $name = $results->getName();
-            $result->setImageUrl($webPath.$name);
+            $imageUrl = "http://192.168.4.10/recipesAPI/public/$name";
+            $result->setImageUrl($imageUrl);
         } else {
             $result->setImageUrl('');
         }
