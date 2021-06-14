@@ -303,7 +303,7 @@ class RecipesController extends AbstractController {
                 empty($data['category']) ? true : $recipe->setCategory($data['category']);
                 empty($data['directions']) ? true : $recipe->setDirections($data['directions']);
                 empty($data['ingredients']) ? true : $recipe->setIngredients($data['ingredients']);
-                $data['favourites'] ?  $recipe->setFavourites(1): $recipe->setFavourites(0);
+                empty($data['favourites']) ?  true: $recipe->setFavourites($data['favourites']);
                 empty($data['calories']) ? true : $recipe->setCalories($data['calories']);
                 empty($data['cuisine']) ? true : $recipe->setCuisine($data['cuisine']);
                 empty($data['addedBy']) ? true : $recipe->setAddedBy($data['addedBy']);
