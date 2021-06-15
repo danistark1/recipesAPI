@@ -39,7 +39,8 @@ class RecipesRepository extends ServiceEntityRepository {
         'cuisine',
         'url',
         'featured',
-        'page'
+        'page',
+        'parsed'
     ];
 
     /**
@@ -149,13 +150,14 @@ class RecipesRepository extends ServiceEntityRepository {
      */
     public function updateRecipe($recipe) {
         $em = $this->getEntityManager();
-        $em->getConnection()->beginTransaction();
+//        $em->getConnection()->beginTransaction();
         try {
             $em->persist($recipe);
             $em->flush();
             // Try and commit the transaction
-            $em->getConnection()->commit();
+      //      $em->getConnection()->commit();
         }catch (ORMInvalidArgumentException | ORMException $e) {
+            dump($e);
             //$this->logger->log('test', [], Logger::CRITICAL);
         }
 
@@ -220,6 +222,7 @@ class RecipesRepository extends ServiceEntityRepository {
             $em->flush();
         $recipesPaginator = new RecipesPaginator($params['page'], $qb);
         $paginatedResults = $recipesPaginator->getPaginatedResult();
+        dump($paginatedResults);
         return $paginatedResults;
     }
 
