@@ -51,7 +51,7 @@ class RecipesMediaRepository extends ServiceEntityRepository
         $em = $this->getEntityManager();
         $recipesMediaEntity = new RecipesMediaEntity();
         $id = null;
-        if ($params[0] instanceof RecipesMediaEntity) {
+        if (isset($params[0])  && $params[0] instanceof RecipesMediaEntity) {
             $id = $params[0]->getId();
             $em->getConnection()->beginTransaction();
             try {
