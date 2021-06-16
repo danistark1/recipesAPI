@@ -189,17 +189,22 @@ class RecipesController extends AbstractController {
      * @param array $results
      */
     private function normalize(array &$results, $parsed = true) {
+        $parsed = true;
         foreach($results as $result) {
-            if (!$parsed) {
-                $result->setIngredients($result->getIngredients());
-                $result->setDirections($result->getDirections());
-            } else {
-                $parsedIngredients = $this->parseArray($result->getIngredients());
-                $parsedDirections = $this->parseArray($result->getDirections());
-
-                $result->setIngredients($parsedIngredients);
-                $result->setDirections($parsedDirections);
-            }
+            $parsedIngredients = $this->parseArray($result->getIngredients());
+            $parsedDirections = $this->parseArray($result->getDirections());
+            $result->setIngredients($parsedIngredients);
+            $result->setDirections($parsedDirections);
+//            if (!$parsed) {
+//                $result->setIngredients($result->getIngredients());
+//                $result->setDirections($result->getDirections());
+//            } else {
+//                $parsedIngredients = $this->parseArray($result->getIngredients());
+//                $parsedDirections = $this->parseArray($result->getDirections());
+//
+//                $result->setIngredients($parsedIngredients);
+//                $result->setDirections($parsedDirections);
+//            }
         }
     }
 
@@ -300,11 +305,13 @@ class RecipesController extends AbstractController {
         $page = $request->get('page');
         $parsed = $request->get('parsed');
         $params = $request->query->all();
+        unset($params['page']);
         $value = array_values($params);
         $key = array_keys($params);
         $query = array_merge($key, $value);
 
         $query['page'] = $page ?? 1;
+        unset($params['page']);
         $params = array_change_key_case ($params, CASE_LOWER );
         $valid = $this->validateRecipeFields($params);
         if ($valid) {
@@ -312,7 +319,6 @@ class RecipesController extends AbstractController {
             $results = $resultsAll['results'] ?? [];
             $pagesCount = $resultsAll['pagesCount'] ?? 0;
             $totalItems = $resultsAll['totalItems'] ?? 0;
-
             if (!empty($results)) {
                 foreach($results as $result) {
                     $this->getFileInternal($result);
