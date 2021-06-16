@@ -41,38 +41,58 @@ class RecipesMediaRepository extends ServiceEntityRepository
     /**
      * Save Recipe record to the database.
      *
-     * @param array $params Post data.
+     * @param  $params
      * @return integer $id is operation is successful, false otherwise.
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function save(array $params) {
+    public function save($params) {
         $em = $this->getEntityManager();
         $recipesMediaEntity = new RecipesMediaEntity();
-        $recipesMediaEntity->setName($params['name']);
-        $recipesMediaEntity->setImageHeight($params['imageHeight'] ?? null);
-        $recipesMediaEntity->setImageWidth($params['imageWidth'] ?? null);
-        $recipesMediaEntity->setPath($params['path']);
-        $recipesMediaEntity->setType($params['type']);
-        $recipesMediaEntity->setSize($params['size']);
-        $recipesMediaEntity->setForeignID($params['foreignID']);
-        $recipesMediaEntity->setForeignTable($params['foreignTable']);
-        //$recipesMediaEntity->setInsertUserID();
-        $dt = RecipiesDateTime::dateNow('');
-        $recipesMediaEntity->setInsertDateTime($dt);
+        $id = null;
+        if ($params[0] instanceof RecipesMediaEntity) {
+            $id = $params[0]->getId();
+            $em->getConnection()->beginTransaction();
+            try {
+                $em->persist($params[0]);
+                $em->flush();
+                // Try and commit the transaction
+                $em->getConnection()->commit();
 
-        $em->getConnection()->beginTransaction();
-        try {
-            $em->persist($recipesMediaEntity);
-            $em->flush();
-            // Try and commit the transaction
-            $em->getConnection()->commit();
-
-        } catch (ORMInvalidArgumentException | ORMException $e) {
+            } catch (ORMInvalidArgumentException | ORMException $e) {
 //            $this->logger->log('test', [], Logger::CRITICAL);
+            }
+        } else {
+            $recipesMediaEntity->setName($params['name']);
+            $recipesMediaEntity->setImageHeight($params['imageHeight'] ?? null);
+            $recipesMediaEntity->setImageWidth($params['imageWidth'] ?? null);
+            $recipesMediaEntity->setPath($params['path']);
+            $recipesMediaEntity->setType($params['type']);
+            $recipesMediaEntity->setSize($params['size']);
+            $recipesMediaEntity->setForeignID($params['foreignID']);
+            $recipesMediaEntity->setForeignTable($params['foreignTable']);
+            //$recipesMediaEntity->setInsertUserID();
+            $dt = RecipiesDateTime::dateNow('');
+            $recipesMediaEntity->setInsertDateTime($dt);
+
+            $em->getConnection()->beginTransaction();
+            try {
+                $em->persist($recipesMediaEntity);
+                $em->flush();
+                // Try and commit the transaction
+                $em->getConnection()->commit();
+
+            } catch (ORMInvalidArgumentException | ORMException $e) {
+//            $this->logger->log('test', [], Logger::CRITICAL);
+            }
         }
-        $id = $recipesMediaEntity->getId();
+        if ($id) {
+            $id = $this->findByQuery(['id' => $id])    ;
+        } else {
+            $id = $recipesMediaEntity->getId();
+        }
+
         return $id;
     }
 

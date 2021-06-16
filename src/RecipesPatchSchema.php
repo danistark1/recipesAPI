@@ -23,6 +23,7 @@ class RecipesPatchSchema {
      * Recipe Schema.
      */
     public static function setSchema() {
+
         if (empty(self::$schema)) {
             self::$schema = new Assert\Collection([
                 'id' => new Assert\Optional(new Assert\Type('integer')),

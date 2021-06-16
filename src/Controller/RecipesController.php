@@ -311,7 +311,6 @@ class RecipesController extends AbstractController {
         $query = array_merge($key, $value);
 
         $query['page'] = $page ?? 1;
-        unset($params['page']);
         $params = array_change_key_case ($params, CASE_LOWER );
         $valid = $this->validateRecipeFields($params);
         if ($valid) {
@@ -398,7 +397,6 @@ class RecipesController extends AbstractController {
         /** @var  RecipesEntity $result */
         $results = $this->recipesMediaRepository->findByQuery(['foreignID' => $result->getID()]);
         if (!empty($results)) {
-            //$webPath = $this->kernel->getProjectDir() . '/public/';
             $results = $results[0];
             $name = $results->getName();
             $imageUrl = "http://192.168.4.10/recipesAPI/public/$name";
@@ -519,8 +517,9 @@ class RecipesController extends AbstractController {
         $insert = !isset($pascalEm['id']);
         $recipe = false;
         if (!$insert) {
+            $pascalEm['id'] = (int)$pascalEm['id'];
             // if this is an update, get the recipe and update the directions field if it wasn't sent.
-            // sine this field is normalied to empty string when its not set and the schema requires a min of 3 chars.
+            // sine this field is normalized to empty string when its not set and the schema requires a min of 3 chars.
             $recipe = $this->recipesRepository->findOneBy(['id' => $pascalEm['id']]);
         }
         $schema = !$insert ? $recipesPatchSchema::$schema : $recipesPostSchema::$schema;
@@ -545,7 +544,6 @@ class RecipesController extends AbstractController {
                     $this->response->setContent(self::VALIDATION_NO_RECORD);
                 }
             }
-
             $this->updateResponseHeader();
         }
         return $this->response;
@@ -637,14 +635,20 @@ class RecipesController extends AbstractController {
      * @throws \Psr\Cache\InvalidArgumentException
      */
     public function postFile($id, Request $request, RecipesMediaRepository $mediaRepository,  RecipesCacheHandler $config): Response {
-        $valid = $this->validateFileRequest($request, $config);
+        $valid = $this->validateFileRequest($request, $config, $id);
+        $dbFileExists = false;
+        /** @var RecipesMediaEntity $dbFile */
+        $dbFile = $this->recipesMediaRepository->findByQuery(['foreignID' => $id]);
+        if (!empty($dbFile[0])) {
+            $dbFileExists = true;
+        }
         if ($valid) {
             /** @var FileBag $requestFile */
             $requestFile = $request->files;
             $file = $requestFile->get('file');
             $mimeType = $file->getClientMimeType();
             $fileName = rand(1, 1000000000).'recipeIMG';
-            $filePath = "public/{$fileName}";
+            $filePath =  "public/{$fileName}";
             $fileSize = $file->getSize();
             $fileSize = $this->byteConversion($fileSize);
             $fileContent = $file->getContent();
@@ -653,19 +657,31 @@ class RecipesController extends AbstractController {
             //TODO Validate {$id} is for an actual recipe to prevent orphaned records.
 
             if (is_int($result)) {
-                $fileData = [
-                    'name' => $fileName,
-                    'path' => $filePath,
-                    'type' => $mimeType,
-                    'size' => $fileSize,
-                    'foreignID' => $id,
-                    'foreignTable' => 'recipesEntity'
-                ];
+                if ($dbFileExists) {
+                    $fileData = $dbFile;
+
+                    empty($fileName) ? true : $dbFile[0]->setName($fileName);
+                    empty($filePath) ? true : $dbFile[0]->setPath($filePath);
+                    empty($mimeType) ? true : $dbFile[0]->setType($mimeType);
+                    //empty($id) ? true : $dbFile[0]->setForeignID($id);
+                    dump($dbFile);
+                } else {
+                    $fileData = [
+                        'name' => $fileName,
+                        'path' => $filePath,
+                        'type' => $mimeType,
+                        'size' => $fileSize,
+                        'foreignID' => $id,
+                        'foreignTable' => 'recipesEntity'
+                    ];
+                }
+
+
                 $result = $mediaRepository->save($fileData);
                 if (!$result) {
                     $this->logger->log('Failed inserting image data into recipesMedia.', ['result' => $result], Logger::CRITICAL);
                     $this->response->setContent('Failed inserting image data into recipesMedia.');
-                    $this->response->setStatusCode(self::VALIDATION_FAILED);
+                    $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
                 }
             }
             else {
@@ -686,8 +702,13 @@ class RecipesController extends AbstractController {
      * @return bool
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    private function validateFileRequest(Request $request, RecipesCacheHandler $config): bool {
+    private function validateFileRequest(Request $request, RecipesCacheHandler $config, $id): bool {
         $valid = true;
+        $dbFileExists = true;
+        $dbFile = $this->recipesMediaRepository->findByQuery(['foreignID' => $id]);
+        if (!empty($dbFile)) {
+            $dbFileExists = true;
+        }
         $allowedExtensions = $config->getConfigKey('allowed-extensions') ?? 'gif,jpg,jpeg';
         $allowedExtensions = explode(',', $allowedExtensions);
         // Type FileBag
@@ -724,6 +745,10 @@ class RecipesController extends AbstractController {
                 $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
             }
 
+            if ($dbFileExists) {
+                $this->response->setStatusCode(self::STATUS_OK);
+                $this->response->setContent('File updated.');
+            }
         }
         return $valid;
     }

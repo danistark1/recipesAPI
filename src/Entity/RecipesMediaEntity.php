@@ -85,6 +85,13 @@ class RecipesMediaEntity
         return $this;
     }
 
+    public function setID(int $id): self
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     public function getPath(): ?string
     {
         return $this->path;
