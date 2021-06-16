@@ -157,7 +157,6 @@ class RecipesRepository extends ServiceEntityRepository {
             // Try and commit the transaction
       //      $em->getConnection()->commit();
         }catch (ORMInvalidArgumentException | ORMException $e) {
-            dump($e);
             //$this->logger->log('test', [], Logger::CRITICAL);
         }
 
@@ -222,7 +221,6 @@ class RecipesRepository extends ServiceEntityRepository {
             $em->flush();
         $recipesPaginator = new RecipesPaginator($params['page'], $qb);
         $paginatedResults = $recipesPaginator->getPaginatedResult();
-        dump($paginatedResults);
         return $paginatedResults;
     }
 
