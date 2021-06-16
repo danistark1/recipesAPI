@@ -658,14 +658,13 @@ class RecipesController extends AbstractController {
 
             if (is_int($result)) {
                 if ($dbFileExists) {
+                    // Update
                     $fileData = $dbFile;
-
                     empty($fileName) ? true : $dbFile[0]->setName($fileName);
                     empty($filePath) ? true : $dbFile[0]->setPath($filePath);
                     empty($mimeType) ? true : $dbFile[0]->setType($mimeType);
-                    //empty($id) ? true : $dbFile[0]->setForeignID($id);
-                    dump($dbFile);
                 } else {
+                    // insert
                     $fileData = [
                         'name' => $fileName,
                         'path' => $filePath,
@@ -675,7 +674,6 @@ class RecipesController extends AbstractController {
                         'foreignTable' => 'recipesEntity'
                     ];
                 }
-
 
                 $result = $mediaRepository->save($fileData);
                 if (!$result) {
