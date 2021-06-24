@@ -20,7 +20,7 @@ REST APIs for Recipe Manager project by https://github.com/PascaleStark
 | PATCH recipes/featured/{id} |   | Set a recipe as featured |
 | PATCH recipes/update/{id} |   | Update a recipe field |
 
-# Paginations
+# PAGINATION
 Results are pagniated by default. 
 
 https://github.com/danistark1/recipesAPI/blob/56188d03f725c3b9260c652595a3a442b7005b67/src/RecipesPaginator.php#L14
