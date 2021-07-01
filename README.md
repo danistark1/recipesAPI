@@ -1,4 +1,3 @@
-# recipesAPI
 
 REST APIs for Recipe Manager project by https://github.com/PascaleStark
 
@@ -25,7 +24,7 @@ Results are pagniated by default.
 
 [Paginator](https://github.com/danistark1/recipesAPI/blob/56188d03f725c3b9260c652595a3a442b7005b67/src/RecipesPaginator.php#L14)
 
-### API SCHEMAS
+### SCHEMAS
 
 - [POST Schema](https://github.com/danistark1/recipesAPI/blob/e72d887aff4d20b5800a77e6989412bb2f892825/src/RecipesPostSchema.php#L14)
 - [PATCH Schema](https://github.com/danistark1/recipesAPI/blob/630cf61b148e26f5888c037aacfc1d9c5d280906/src/RecipesPatchSchema.php#L14)
