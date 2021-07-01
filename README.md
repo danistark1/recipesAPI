@@ -2,7 +2,7 @@
 
 REST APIs for Recipe Manager project by https://github.com/PascaleStark
 
-# REST APIs
+# APIs
 
 
 | Endpoint | ex | Function|
