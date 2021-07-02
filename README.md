@@ -1,5 +1,5 @@
 
-REST APIs for Recipe Manager project by https://github.com/PascaleStark
+API endpoints for Recipe Manager project by https://github.com/PascaleStark
 
 # APIs
 
@@ -20,6 +20,7 @@ REST APIs for Recipe Manager project by https://github.com/PascaleStark
 | PATCH recipes/update/{id} |   | Update a recipe field |
 
 ### PAGINATION
+
 Results are pagniated by default. 
 
 [Paginator](https://github.com/danistark1/recipesAPI/blob/56188d03f725c3b9260c652595a3a442b7005b67/src/RecipesPaginator.php#L14)
