@@ -21,6 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -383,7 +384,8 @@ class RecipesController extends AbstractController {
             $this->validateResponse($results);
             $this->updateResponseHeader();
         } else {
-            $this->response->setStatusCode(self::STATUS_NO_CONTENT);
+            $response = new JsonResponse([], self::STATUS_NOT_FOUND);
+            $this->response = $response;
         }
         return $this->response;
     }
@@ -688,7 +690,6 @@ class RecipesController extends AbstractController {
                 $this->response->setStatusCode(self::VALIDATION_FAILED);
             }
         }
-
         return $this->response;
     }
 
