@@ -842,13 +842,13 @@ class RecipesController extends AbstractController {
             $normalizedData['directions'] = empty($normalizedData['directions']) ? '' : ucfirst($normalizedData['directions']);
             $normalizedData['ingredients'] = empty($normalizedData['ingredients']) ? '' : ucfirst($normalizedData['ingredients']);
             $normalizedData['favourites'] = $normalizedData['favourites'] ?? 0;
-            $normalizedData['addedBy'] = empty($normalizedData['addedBy']) ? null : $normalizedData['addedBy'];
-            $normalizedData['prepTime'] = empty($normalizedData['prepTime']) ? null : $normalizedData['prepTime'];
-            $normalizedData['cookingTime'] = empty($normalizedData['cookingTime']) ? null : $normalizedData['cookingTime'];
+            $normalizedData['addedBy'] = empty($normalizedData['addedBy']) ? 'NA' : $normalizedData['addedBy'];
+            $normalizedData['prepTime'] = empty($normalizedData['prepTime']) ? 'NA' : $normalizedData['prepTime'];
+            $normalizedData['cookingTime'] = empty($normalizedData['cookingTime']) ?  'NA' : $normalizedData['cookingTime'];
             $normalizedData['calories'] = $normalizedData['calories'] ?? 'NA';
-            $normalizedData['cuisine'] = empty($normalizedData['cuisine']) ? null : $normalizedData['cuisine'];
+            $normalizedData['cuisine'] = empty($normalizedData['cuisine']) ?  'NA' : $normalizedData['cuisine'];
             $normalizedData['url'] = $normalizedData['url'] ?? '';
-            $normalizedData['servings'] = empty($normalizedData['servings']) ? null : $normalizedData['servings'];
+            $normalizedData['servings'] = empty($normalizedData['servings']) ?  'NA' : $normalizedData['servings'];
             $normalizedData['featured'] = $normalizedData['featured'] ?? false;
         }
         return $normalizedData;
