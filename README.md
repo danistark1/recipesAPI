@@ -22,8 +22,8 @@ API endpoints for Recipe Manager project by https://github.com/PascaleStark
 ### SETUP
 
 - composer install
-- bin/console doctrine:database:create
 - point your .env to the created db (DATABASE_URL=mysql://db_user:db_password@127.0.0.1:3306/db_name?serverVersion=5)
+- bin/console doctrine:database:create
 - bin/console doctrine:schema:drop -n -q --force --full-database && rm migrations/*.php && bin/console make:migration && bin/console doctrine:migrations:migrate -n -q
 
 ### PAGINATION
