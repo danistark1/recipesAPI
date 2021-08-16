@@ -27,7 +27,7 @@ class RecipesPatchSchema {
         if (empty(self::$schema)) {
             self::$schema = new Assert\Collection([
                 'id' => new Assert\Optional(new Assert\Type('integer')),
-                'name' => new Assert\Optional(new Assert\Length(['min' => 3])),
+                'name' => new Assert\Optional(new Assert\Length(['min' => 2])),
                 'prepTime' =>  new Assert\Optional([new Assert\Length(['min' => 3])]),
                 'cookingTime' => new Assert\Optional([new Assert\Length(['min' => 3])]),
                 'servings' => new Assert\Optional(),
@@ -35,8 +35,8 @@ class RecipesPatchSchema {
                 'directions' => new Assert\Optional(new Assert\Length(['min' => 3])),
                 'favourites' => [new Assert\Optional([new Assert\PositiveOrZero()])],
                 'addedBy' => new Assert\Optional([new Assert\Length(['min' => 3])]),
-                'calories' => new Assert\Optional([new Assert\Length(['min' => 1])]),
-                'cuisine' => new Assert\Optional([new Assert\Length(['min' => 3])]),
+                'calories' => new Assert\Optional(),
+                'cuisine' =>  new Assert\Optional(),
                 'ingredients' => new Assert\Optional(new Assert\Length(['min' => 3])),
                 'url' => new Assert\Optional([new Assert\Url()]),
                 'featured' => new Assert\Optional(new Assert\Type('bool')),
