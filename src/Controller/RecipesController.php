@@ -395,13 +395,14 @@ class RecipesController extends AbstractController {
      *
      * @param $id
      */
-    public function getFileInternal(&$result) {
+    public function getFileInternal(&$result, RecipesCacheHandler $config) {
         /** @var  RecipesEntity $result */
         $results = $this->recipesMediaRepository->findByQuery(['foreignID' => $result->getID()]);
         if (!empty($results)) {
             $results = $results[0];
             $name = $results->getName();
-            $imageUrl = "http://192.168.4.10/recipesAPI/public/$name";
+            $url = $config->getConfigKey('image-url') ?? "http://192.168.4.10/recipesAPI/public/";
+            $imageUrl = $url.$name;
             $result->setImageUrl($imageUrl);
         } else {
             $result->setImageUrl('');
