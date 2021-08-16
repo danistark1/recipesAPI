@@ -96,6 +96,9 @@ class RecipesController extends AbstractController {
     /** @var Kernel */
     private $kernel;
 
+    /** @var RecipesCacheHandler $config */
+    private $config;
+
     /** @var RecipesMediaRepository */
     private $recipesMediaRepository;
 
@@ -112,13 +115,15 @@ class RecipesController extends AbstractController {
         RecipesLogger $logger,
         ObjectNormalizer $objectNormalizer,
         RecipesMediaRepository $recipesMediaRepository,
-        Kernel $kernel) {
+        Kernel $kernel,
+        RecipesCacheHandler $config) {
         $this->response  = new Response();
 
         $encoders = [new JsonEncoder()];
         $normalizers = [$objectNormalizer];
         $this->kernel =  $kernel;
         $this->recipesMediaRepository = $recipesMediaRepository;
+        $this->config = $config;
 
         $this->serializer = new Serializer($normalizers, $encoders);
         $this->response->headers->set('Content-Type', 'application/json');
@@ -396,13 +401,12 @@ class RecipesController extends AbstractController {
      * @param $id
      */
     public function getFileInternal(&$result) {
-        $config = $this->container->get(RecipesCacheHandler::class);
         /** @var  RecipesEntity $result */
         $results = $this->recipesMediaRepository->findByQuery(['foreignID' => $result->getID()]);
         if (!empty($results)) {
             $results = $results[0];
             $name = $results->getName();
-            $url = $config->getConfigKey('image-url') ?? "http://192.168.4.10/recipesAPI/public/";
+            $url = $this->config->getConfigKey('image-url') ?? "http://192.168.4.10/recipesAPI/public/";
             $imageUrl = $url.$name;
             $result->setImageUrl($imageUrl);
         } else {
