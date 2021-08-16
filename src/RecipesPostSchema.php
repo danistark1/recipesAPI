@@ -25,7 +25,7 @@ class RecipesPostSchema {
     public static function setSchema() {
         if (empty(self::$schema)) {
             self::$schema = new Assert\Collection([
-                'name' => [new Assert\Length(['min' => 3])],
+                'name' => [new Assert\Length(['min' => 2])],
                 'prepTime' =>  new Assert\Optional([new Assert\Length(['min' => 2])]),
                 'cookingTime' => new Assert\Optional([new Assert\Length(['min' => 2])]),
                 'servings' => new Assert\Optional(),
