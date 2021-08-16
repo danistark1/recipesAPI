@@ -395,7 +395,8 @@ class RecipesController extends AbstractController {
      *
      * @param $id
      */
-    public function getFileInternal(&$result, RecipesCacheHandler $config) {
+    public function getFileInternal(&$result) {
+        $config = $this->container->get(RecipesCacheHandler::class);
         /** @var  RecipesEntity $result */
         $results = $this->recipesMediaRepository->findByQuery(['foreignID' => $result->getID()]);
         if (!empty($results)) {
