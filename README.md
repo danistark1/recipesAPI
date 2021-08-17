@@ -32,6 +32,10 @@ Results are pagniated by default.
 
 [Paginator](https://github.com/danistark1/recipesAPI/blob/56188d03f725c3b9260c652595a3a442b7005b67/src/RecipesPaginator.php#L14)
 
+### RATE-LIMITING
+
+APIs use symfony's RateLimit factory. The limit can be configured using the config key "rate-limit-requests".
+
 ### SCHEMAS
 
 - [POST Schema](https://github.com/danistark1/recipesAPI/blob/e72d887aff4d20b5800a77e6989412bb2f892825/src/RecipesPostSchema.php#L14)
