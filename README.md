@@ -26,6 +26,17 @@ API endpoints for Recipe Manager project by https://github.com/PascaleStark
 - bin/console doctrine:database:create
 - bin/console doctrine:schema:drop -n -q --force --full-database && rm migrations/*.php && bin/console make:migration && bin/console doctrine:migrations:migrate -n -q
 
+### Configuration
+
+| Config Key | Config Value | Function|
+| ------------- | ------------- | ------------- |
+| app-version  |  1 |  Current application version|
+| allowed-extensions |  gif,jpg,jpeg,png |  File extensions that are allowed for uploading purpose|
+| max-file-size  |  20 |  Max upload file size in MBs|
+| image-url  |  http://{serverIP}/recipesAPI/public/ |  images location on the server|
+| rate-limit-requests  |  3 | This is the number of allowed requests per minute|
+
+
 ### PAGINATION
 
 Results are pagniated by default. 
