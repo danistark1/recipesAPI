@@ -32,6 +32,9 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+
 /**
  * Class RecipesController
  *
@@ -102,6 +105,8 @@ class RecipesController extends AbstractController {
     /** @var RecipesMediaRepository */
     private $recipesMediaRepository;
 
+
+
     /**
      * SensorController constructor.
      *
@@ -156,7 +161,16 @@ class RecipesController extends AbstractController {
      * @return Response
      * @Route("recipes/name/{name}", methods={"GET"}, name="get_by_name")
      */
-    public function getByName(string $name): Response {
+    public function getByName(
+        Request $request,
+        string $name,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config): Response {
+
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         $name = strtolower($name);
         $valid = !empty($name);
         if ($valid) {
@@ -181,7 +195,19 @@ class RecipesController extends AbstractController {
      * @return Response
      * @throws Exception
      */
-    public function postCategory(Request $request, ValidatorInterface $validator, CategorySchema $categorySchema): Response {
+    public function postCategory(
+        Request $request,
+        ValidatorInterface $validator,
+        CategorySchema $categorySchema,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
+
+
         $input = (array)json_decode($request->getContent());
         $violations = $validator->validate($input, $categorySchema::$schema);
         // TODO Category Post
@@ -237,7 +263,17 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function delete($id): Response {
+    public function delete(
+        Request $request,
+        $id,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
+
         if (is_numeric($id)) {
             $result = $this->recipesRepository->delete($id);
             if (!$result) {
@@ -262,7 +298,15 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function patchFavourites($id, Request $request): Response {
+    public function patchFavourites(
+        $id,
+        Request $request,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
             $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
             if (!empty($recipe)) {
                 $recipe = $this->recipesRepository->toggleField('Favourites', $recipe);
@@ -285,7 +329,16 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function patchFeatured($id, Request $request): Response {
+    public function patchFeatured(
+        $id,
+        Request $request,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         $recipe = $this->recipesRepository->findOneBy(['id' => $id]);
         if (!empty($recipe)) {
             $recipe = $this->recipesRepository->toggleField('Featured', $recipe);
@@ -306,7 +359,16 @@ class RecipesController extends AbstractController {
      * @return Response
      * @Route("recipes/where", methods={"GET", "OPTIONS", "HEAD"}, name="get_where")
      */
-    public function getWhere(Request $request): Response {
+    public function getWhere(
+        Request $request,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         // TODO Validate request.
         $page = $request->get('page');
         $parsed = $request->get('parsed');
@@ -349,7 +411,16 @@ class RecipesController extends AbstractController {
      * @return Response
      * @Route("recipes/search", methods={"GET", "OPTIONS", "HEAD"}, name="get_search")
      */
-    public function getSearchPager(Request $request): Response {
+    public function getSearchPager(
+        Request $request,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         // TODO Validate request.
         $query = $request->query->get('q');
         $page = $request->query->get('page') ?? 1;
@@ -421,7 +492,19 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @Route("recipes/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
      */
-    public function getFile($id, Request $request, Kernel $kernel, RecipesMediaRepository $recipesMediaRepository): Response {
+    public function getFile(
+        $id,
+        Request $request,
+        Kernel $kernel,
+        RecipesMediaRepository $recipesMediaRepository,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         $webPath = $kernel->getProjectDir() . '/public/';
         // TODO Validate Id exists.
         $record = $this->getByIdInternal($id, true);
@@ -513,6 +596,32 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Check if a request should be rate limited.
+     * This depends on a recipesConfiguration value of "rate-limit-requests", (check RateLimitFactory::create())
+     * If the config "rate-limit-requests" is not set, rate limit defaults to what is set in rate_limiter.yaml file.
+     *
+     * @param Request $request API Request.
+     * @param RateLimiterFactory $anonymousApiLimiter Symfony's rate limiting factory.
+     * @param RecipesCacheHandler $config Configuration class.
+     * @return bool If a request should be rate limited.
+     */
+    private function isRateLimited(Request $request, RateLimiterFactory $anonymousApiLimiter, RecipesCacheHandler $config): bool {
+        $isRateLimited = false;
+        // create a limiter based on a unique identifier of the client
+        // (e.g. the client's IP address, a username/email, an API key, etc.)
+        $limiter = $anonymousApiLimiter->create($request->getClientIp(), $config);
+        // the argument of consume() is the number of tokens to consume
+        // and returns an object of type Limit
+        if (false === $limiter->consume(1)->isAccepted()) {
+            $this->response->setStatusCode(429);
+            $this->response->setContent("You've hit the rate limit, slow down!.");
+            $isRateLimited = true;
+        }
+
+        return $isRateLimited;
+    }
+
+    /**
      * Post a recipe.
      *
      * @Route("recipes",  methods={"POST", "OPTIONS"}, name="post_recipes")
@@ -520,10 +629,22 @@ class RecipesController extends AbstractController {
      * @return Response
      * @throws Exception
      */
-    public function post(Request $request, ValidatorInterface $validator, RecipesPostSchema $recipesPostSchema, RecipesPatchSchema $recipesPatchSchema): Response {
+    public function post(
+        Request $request,
+        ValidatorInterface $validator,
+        RecipesPostSchema $recipesPostSchema,
+        RecipesPatchSchema $recipesPatchSchema,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config): Response {
         $pascalEm = (array)json_decode($request->getContent(), true);
         $insert = !isset($pascalEm['id']);
         $recipe = false;
+
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
+
         if (!$insert) {
             $pascalEm['id'] = (int)$pascalEm['id'];
             // if this is an update, get the recipe and update the directions field if it wasn't sent.
@@ -567,7 +688,18 @@ class RecipesController extends AbstractController {
      * @throws \Doctrine\ORM\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function patch($id, Request $request, ValidatorInterface $validator, RecipesUpdateSchema $recipesUpdateSchema): Response {
+    public function patch(
+        $id,
+        Request $request,
+        ValidatorInterface $validator,
+        RecipesUpdateSchema $recipesUpdateSchema,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config
+    ): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         $data = json_decode($request->getContent(), true);
         $violations = $validator->validate($data, $recipesUpdateSchema::$schema);
         $valid = $this->validateRequest($violations);
@@ -642,7 +774,16 @@ class RecipesController extends AbstractController {
      * @return Response
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function postFile($id, Request $request, RecipesMediaRepository $mediaRepository,  RecipesCacheHandler $config): Response {
+    public function postFile(
+        $id,
+        Request $request,
+        RecipesMediaRepository $mediaRepository,
+        RecipesCacheHandler $config,
+        RateLimiterFactory $anonymousApiLimiter): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
         $valid = $this->validateFileRequest($request, $config, $id);
         $dbFileExists = false;
         /** @var RecipesMediaEntity $dbFile */

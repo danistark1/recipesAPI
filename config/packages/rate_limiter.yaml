@@ -1,0 +1,12 @@
+# config/packages/rate_limiter.yaml
+framework:
+    rate_limiter:
+        anonymous_api:
+            # use 'sliding_window' if you prefer that policy
+            policy: 'sliding_window'
+            limit: 3
+            interval: '1 minute'
+#        authenticated_api:
+#            policy: 'token_bucket'
+#            limit: 1
+#            rate: { interval: '1 minute', amount: 3 }

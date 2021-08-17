@@ -97,9 +97,6 @@
             "config/packages/fos_rest.yaml"
         ]
     },
-    "justinrainbow/json-schema": {
-        "version": "5.2.10"
-    },
     "laminas/laminas-code": {
         "version": "3.4.1"
     },
@@ -231,6 +228,18 @@
     "symfony/http-kernel": {
         "version": "v5.2.6"
     },
+    "symfony/lock": {
+        "version": "5.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "5.2",
+            "ref": "a1c8800e40ae735206bb14586fdd6c4630a51b8d"
+        },
+        "files": [
+            "config/packages/lock.yaml"
+        ]
+    },
     "symfony/maker-bundle": {
         "version": "1.0",
         "recipe": {
@@ -258,6 +267,9 @@
             "config/packages/test/monolog.yaml"
         ]
     },
+    "symfony/options-resolver": {
+        "version": "v5.2.12"
+    },
     "symfony/orm-pack": {
         "version": "v2.1.0"
     },
@@ -284,6 +296,9 @@
     },
     "symfony/proxy-manager-bridge": {
         "version": "v5.2.4"
+    },
+    "symfony/rate-limiter": {
+        "version": "v5.2.12"
     },
     "symfony/routing": {
         "version": "5.1",
