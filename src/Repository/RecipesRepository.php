@@ -199,7 +199,7 @@ class RecipesRepository extends ServiceEntityRepository {
      * @return array
      */
     public function findByQuery(array $params): array {
-        $recipeData = parent::findBy($params,[], 20);
+        $recipeData = parent::findBy($params, [], 20);
         return $recipeData;
     }
 

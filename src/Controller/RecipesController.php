@@ -154,6 +154,34 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Random recipe Selector
+     * Randomly select from available recipes of type "Main Dish"
+     *
+     * @Route("recipes/selector", methods={"GET"}, name="get_random_recipes")
+     */
+    public function randomRecipeSelector(): Response
+    {
+        // TODO store the randomly selected recipes in a table, with selected data.
+        // TODO chron to send an email of the selected recipe.. configured data..
+        $results = $this->recipesRepository->findByQuery(['category' => 'Main Dish']);
+        if (empty($results)) {
+            $this->response->setContent("No recipes available!");
+            return $this->response;
+        }
+        $recipeSelectedId = [];
+        /** @var RecipesEntity $result */
+        foreach($results as $result) {
+            $recipeSelectedId[] = $result->getId();
+        }
+        $randId = array_rand($recipeSelectedId,1);
+        $selectedRandId = $recipeSelectedId[$randId];
+        $result = $this->recipesRepository->findOneBy(['id' => $selectedRandId]);
+        $selectedName = $result->getName();
+        $this->response->setContent($selectedName);
+        return $this->response;
+    }
+
+    /**
      * Get recipe by name.
      *
      * @param string $name Recipe name
