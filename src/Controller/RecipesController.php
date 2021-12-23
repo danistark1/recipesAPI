@@ -718,8 +718,7 @@ class RecipesController extends AbstractController {
         if ($isRateLimited) {
             return $this->response;
         }
-
-      //  $name = trim($pascalEm['name']);
+        
         if (!$insert) {
             $pascalEm['id'] = (int)$pascalEm['id'];
             // if this is an update, get the recipe and update the directions field if it wasn't sent.
