@@ -719,6 +719,7 @@ class RecipesController extends AbstractController {
             return $this->response;
         }
 
+      //  $name = trim($pascalEm['name']);
         if (!$insert) {
             $pascalEm['id'] = (int)$pascalEm['id'];
             // if this is an update, get the recipe and update the directions field if it wasn't sent.
@@ -1045,6 +1046,10 @@ class RecipesController extends AbstractController {
         foreach($parameters as $param => $value) {
             if ($param === 'name' || $param === 'addedBy') {
                 $value =  ucwords($value);
+            }
+            if ($param === 'name') {
+                // prevent names with spaces #recipesAPI/issues/33
+                $value = trim($value);
             }
             $normalizedData += [$param => $value];
         }
