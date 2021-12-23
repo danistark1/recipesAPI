@@ -14,6 +14,7 @@ use App\RecipesUpdateSchema;
 use App\Repository\RecipesMediaRepository;
 use App\Repository\RecipesRepository;
 use App\RecipesLogger;
+use App\Repository\RecipesSelectorRepository;
 use App\Repository\RecipesTagsRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Monolog\Logger;
@@ -54,16 +55,16 @@ class RecipesController extends AbstractController {
     const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q={searchTerm}";
     const VALIDATION_INVALID_SEARCH_FILTER = "Invalid search filter provided.";
 
-    const CATEGORY_DESSERT = 'dessert';
-    const CATEGORY_SALAD = 'salad';
-    const CATEGORY_APPETIZER = 'appetizer';
-    const CATEGORY_MAIN_DISH = 'main dish';
-    const CATEGORY_HOLIDAYS = 'holidays';
-    const CATEGORY_BREAKFAST = 'breakfast';
-    const CATEGORY_SIDE_DISH = 'side dish';
-    const CATEGORY_BEVERAGE = 'beverage';
-    const CATEGORY_BREAD = 'bread';
-    const CATEGORY_SOUP = 'soup';
+    const CATEGORY_DESSERT = 'Dessert';
+    const CATEGORY_SALAD = 'Salad';
+    const CATEGORY_APPETIZER = 'Appetizer';
+    const CATEGORY_MAIN_DISH = 'Main Dish';
+    const CATEGORY_HOLIDAYS = 'Holidays';
+    const CATEGORY_BREAKFAST = 'Breakfast';
+    const CATEGORY_SIDE_DISH = 'Side Dish';
+    const CATEGORY_BEVERAGE = 'Beverage';
+    const CATEGORY_BREAD = 'Bread';
+    const CATEGORY_SOUP = 'Soup';
 
     public static $categories = [
         self::CATEGORY_APPETIZER,
@@ -86,6 +87,9 @@ class RecipesController extends AbstractController {
 
     /** @var RecipesRepository|null  */
     private $recipesRepository;
+
+    /** @var RecipesSelectorRepository|null  */
+    private $recipesSelectorRepository;
 
     /** @var RecipesTagsRepository  */
     private $recipesTagsRepository;
@@ -121,13 +125,15 @@ class RecipesController extends AbstractController {
         ObjectNormalizer $objectNormalizer,
         RecipesMediaRepository $recipesMediaRepository,
         Kernel $kernel,
-        RecipesCacheHandler $config) {
+        RecipesCacheHandler $config,
+        RecipesSelectorRepository $recipesSelectorRepository) {
         $this->response  = new Response();
 
         $encoders = [new JsonEncoder()];
         $normalizers = [$objectNormalizer];
         $this->kernel =  $kernel;
         $this->recipesMediaRepository = $recipesMediaRepository;
+        $this->recipesSelectorRepository = $recipesSelectorRepository;
         $this->config = $config;
 
         $this->serializer = new Serializer($normalizers, $encoders);
@@ -156,28 +162,68 @@ class RecipesController extends AbstractController {
     /**
      * Random recipe Selector
      * Randomly select from available recipes of type "Main Dish"
+     * If a recipe has already been selected (recipeSelectorEntity table), it does not get selected again, unless all
+     * other recipes have been selected. Once all recipes are selected, the
      *
      * @Route("recipes/selector", methods={"GET"}, name="get_random_recipes")
      */
     public function randomRecipeSelector(): Response
     {
-        // TODO store the randomly selected recipes in a table, with selected data.
+        // TODO add a param in the request (from FE) that when available in the request, no email needs to be sent,
+        // this is just for FE to display the randomly selected recipes
         // TODO chron to send an email of the selected recipe.. configured data..
-        $results = $this->recipesRepository->findByQuery(['category' => 'Main Dish']);
-        if (empty($results)) {
-            $this->response->setContent("No recipes available!");
-            return $this->response;
+        $results = $this->recipesRepository->findByQuery(['category' => self::CATEGORY_MAIN_DISH]);
+        $totalRecipesCounter = count($results);
+        $totalRecipesSelectorCounter = 0;
+        $counter = 0;
+        $recipeIDSaved = false;
+
+        while($counter <= $totalRecipesCounter) {
+            // Selected recipe has already been saved in recipesselectorentity OR all recipes have already been selected.
+            $allRecipesSelected = $totalRecipesSelectorCounter === $totalRecipesCounter;
+            if ($allRecipesSelected) {
+                $selectedName = 'All recipes have been selected at least once, resetting table...';
+                $this->recipesSelectorRepository->delete();
+                break;
+            }
+            if ($recipeIDSaved) {
+               break;
+            }
+            if (empty($results)) {
+                $this->response->setContent("No recipes available!");
+                return $this->response;
+            }
+
+            $recipeSelectedId = [];
+            /** @var RecipesEntity $result */
+            foreach($results as $result) {
+                $recipeSelectedId[] = $result->getId();
+            }
+            $randId = array_rand($recipeSelectedId,1);
+            $selectedRandId = $recipeSelectedId[$randId];
+            $result = $this->recipesRepository->findOneBy(['id' => $selectedRandId]);
+            $selectedName = $result->getName();
+            // Random recipe selected.
+            if ($selectedName !== '' && $selectedName !== null) {
+                $totalRecipesSelectorCounter++;
+                // has this name been selected before?
+                // -- if selected before, find another recipe
+                $previouslySelectedRecipe = $this->recipesSelectorRepository->findByQuery(['recipeId' => $result->getId()]);
+                if ($previouslySelectedRecipe) {
+                    $selectedName = '';
+                    $counter++;
+                    continue;
+                }
+
+                // Store randomly selected recipe in recipeselector
+                $recipeSelectorData = [
+                    'name' => $selectedName,
+                    'recipeId' => $result->getId()];
+                $recipeIDSaved = $this->recipesSelectorRepository->save($recipeSelectorData);
+            }
+            $counter++;
         }
-        $recipeSelectedId = [];
-        /** @var RecipesEntity $result */
-        foreach($results as $result) {
-            $recipeSelectedId[] = $result->getId();
-        }
-        $randId = array_rand($recipeSelectedId,1);
-        $selectedRandId = $recipeSelectedId[$randId];
-        $result = $this->recipesRepository->findOneBy(['id' => $selectedRandId]);
-        $selectedName = $result->getName();
-        $this->response->setContent($selectedName);
+        $this->response->setContent(empty($selectedName) ?  'No recipes found, table could be empty.' : $selectedName);
         return $this->response;
     }
 
@@ -1056,7 +1102,6 @@ class RecipesController extends AbstractController {
      */
     private function validateCategory($category): bool {
         // TODO this shoul be part of validation schema.
-        $category = strtolower($category);
         return in_array($category, self::$categories);
     }
 }
