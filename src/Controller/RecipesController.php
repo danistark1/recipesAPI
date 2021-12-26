@@ -35,6 +35,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Twig\Environment;
 
 /**
  * Class RecipesController
@@ -54,6 +57,7 @@ class RecipesController extends AbstractController {
     const VALIDATION_STATION_PARAMS = "Invalid post parameters.";
     const VALIDATION_INVALID_SEARCH_QUERY = "Invalid search query provided, query should be search?q={searchTerm}";
     const VALIDATION_INVALID_SEARCH_FILTER = "Invalid search filter provided.";
+    const VALIDATION_INVALID_FILTER = "Invalid filter provided.";
 
     const CATEGORY_DESSERT = 'Dessert';
     const CATEGORY_SALAD = 'Salad';
@@ -109,6 +113,11 @@ class RecipesController extends AbstractController {
     /** @var RecipesMediaRepository */
     private $recipesMediaRepository;
 
+    /** @var Environment  */
+    public $templating;
+
+    /** @var MailerInterface  */
+    public $mailer;
 
 
     /**
@@ -126,7 +135,9 @@ class RecipesController extends AbstractController {
         RecipesMediaRepository $recipesMediaRepository,
         Kernel $kernel,
         RecipesCacheHandler $config,
-        RecipesSelectorRepository $recipesSelectorRepository) {
+        RecipesSelectorRepository $recipesSelectorRepository,
+        Environment $templating,
+        MailerInterface $mailer) {
         $this->response  = new Response();
 
         $encoders = [new JsonEncoder()];
@@ -135,6 +146,8 @@ class RecipesController extends AbstractController {
         $this->recipesMediaRepository = $recipesMediaRepository;
         $this->recipesSelectorRepository = $recipesSelectorRepository;
         $this->config = $config;
+        $this->templating = $templating;
+        $this->mailer = $mailer;
 
         $this->serializer = new Serializer($normalizers, $encoders);
         $this->response->headers->set('Content-Type', 'application/json');
@@ -163,29 +176,34 @@ class RecipesController extends AbstractController {
      * Random recipe Selector
      * Randomly select from available recipes of type "Main Dish"
      * If a recipe has already been selected (recipeSelectorEntity table), it does not get selected again, unless all
-     * other recipes have been selected. Once all recipes are selected, the
+     * other recipes have been selected. Once all recipes are selected, the table gets erased, and we start all over.
      *
      * @Route("recipes/selector", methods={"GET"}, name="get_random_recipes")
      */
-    public function randomRecipeSelector(): Response
+    public function randomRecipeSelector(Request $request): Response
     {
+        // FE doesn't need to send and email for randomly selected recipes, just display recipes in a label.
+        $feRequest  = $request->get('fe-selector') ?? false;
+
         // TODO add a param in the request (from FE) that when available in the request, no email needs to be sent,
         // this is just for FE to display the randomly selected recipes
         // TODO chron to send an email of the selected recipe.. configured data..
+        // TODO Parse # out of directions && ingredients before sending to twig
         $results = $this->recipesRepository->findByQuery(['category' => self::CATEGORY_MAIN_DISH]);
         $totalRecipesCounter = count($results);
         $totalRecipesSelectorCounter = 0;
         $counter = 0;
         $recipeIDSaved = false;
+        $shouldSendRecipeSelectorEmail = $this->config->getConfigKey('send-recipe-selector-email');
 
         while($counter <= $totalRecipesCounter) {
             // Selected recipe has already been saved in recipesselectorentity OR all recipes have already been selected.
             $allRecipesSelected = $totalRecipesSelectorCounter === $totalRecipesCounter;
+            // All recipes have already been selected, reset table...
             if ($allRecipesSelected) {
-                $selectedName = 'All recipes have been selected at least once, resetting table...';
                 $this->recipesSelectorRepository->delete();
-                break;
             }
+            // TODO: Do not select a recipe if it has already been selected at least 2 weeks ago.
             if ($recipeIDSaved) {
                break;
             }
@@ -220,6 +238,30 @@ class RecipesController extends AbstractController {
                     'name' => $selectedName,
                     'recipeId' => $result->getId()];
                 $recipeIDSaved = $this->recipesSelectorRepository->save($recipeSelectorData);
+                // Send Email, if config 'send-recipe-selector-email' is set to 1
+                // && this is not an FE request to randomly select a recipe.
+
+                $directions = $this->parseRecipeData($result->getDirections());
+                $ingredients = $this->parseRecipeData($result->getIngredients());
+                if ($shouldSendRecipeSelectorEmail == 1 && !$feRequest) {
+                    $recipeData = [
+                        'recipeName'        => $selectedName,
+                        'recipeDirections'  => $directions,
+                        'recipeIngredients' => $ingredients,
+                        'recipeLink'        => $result->getUrl()];
+                    $message = (new Email())
+                        ->subject('Your weekly Recipe is here!')
+                        ->from($this->config->getConfigKey('email-from'))
+                        ->to($this->config->getConfigKey('email-to'))
+                        ->html(
+                            $this->templating->render(
+                                'email/recipe_selector.html.twig',
+                                $recipeData
+                            ),
+                            'text/html'
+                        );
+                    $this->mailer->send($message);
+                }
             }
             $counter++;
         }
@@ -227,6 +269,16 @@ class RecipesController extends AbstractController {
         return $this->response;
     }
 
+    /**
+     * Parse recipe data.
+     *
+     * searches for # and returns parsed data.
+     *
+     * @param $directions
+     */
+    private function parseRecipeData($directions) {
+        return explode('#', $directions);
+    }
     /**
      * Get recipe by name.
      *
@@ -477,6 +529,60 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Get all recipes filtered by category
+     *
+     * @param Request $request
+     * @Route("recipes/all", methods={"GET", "OPTIONS", "HEAD"}, name="get_all")
+     */
+    public function getAllRecipes(
+        Request $request,
+        RateLimiterFactory $anonymousApiLimiter,
+        RecipesCacheHandler $config): Response {
+        $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
+        if ($isRateLimited) {
+            return $this->response;
+        }
+        $page = $request->query->get('page') ?? 1;
+        //TODO Sanitize query remove special chars.
+        $parsed = $request->get('parsed');
+        $field = $request->get('filter');
+        $value = null;
+        if ($field) {
+            $validFields = RecipesRepository::VALID_FIELDS;
+            if (!in_array($field, $validFields)) {
+                $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+                $this->response->setContent(self::VALIDATION_INVALID_SEARCH_FILTER);
+                return $this->response;
+            }
+            $value = $request->query->get('value');
+        }
+       // $valid = true;
+    //    if ($valid) {
+            $filter = [];
+            if (!empty($field) && !empty($value)) {
+                $filter =  ['field' => $field, 'value' => $value];
+            }
+            $resultsAll = $this->recipesRepository->getAllByPage($filter, $page) ?? [];
+            $results = $resultsAll['results'] ?? [];
+            $pagesCount = $resultsAll['pagesCount'] ?? 0;
+            $totalItems = $resultsAll['totalItems'] ?? 0;
+            if (!empty($results)) {
+                foreach($results as $result) {
+                    $this->getFileInternal($result);
+                }
+                $this->normalize($results, $parsed);
+                $this->response->headers->set('recipes-totalItems', $totalItems);
+                $this->response->headers->set('recipes-pagesCount', $pagesCount);
+            }
+            $this->validateResponse($results);
+            $this->updateResponseHeader();
+//        } else {
+//            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
+//        }
+        return $this->response;
+    }
+
+    /**
      * Left/Right wildcard search a recipe. Returns a paginated search result.
      * Ex. - GET /recipes/search?q=pizza&page=1&filter={field}&{field}=Main Dish
      *
@@ -718,7 +824,7 @@ class RecipesController extends AbstractController {
         if ($isRateLimited) {
             return $this->response;
         }
-        
+
         if (!$insert) {
             $pascalEm['id'] = (int)$pascalEm['id'];
             // if this is an update, get the recipe and update the directions field if it wasn't sent.

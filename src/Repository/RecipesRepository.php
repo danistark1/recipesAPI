@@ -22,7 +22,7 @@ use App\Kernel;
 class RecipesRepository extends ServiceEntityRepository {
 
     /**
-     * Valid recipe fields.
+     * Valid recipe get request fields.
      */
     public const VALID_FIELDS = [
         'id',
@@ -40,11 +40,12 @@ class RecipesRepository extends ServiceEntityRepository {
         'url',
         'featured',
         'page',
-        'parsed'
+        'parsed',
+        'filter'
     ];
 
     /**
-     * Valid recipe post fields.
+     * Valid recipe post request fields.
      */
     private const VALID_POST_FIELDS = [
         'name',
@@ -245,6 +246,26 @@ class RecipesRepository extends ServiceEntityRepository {
                 ->getQuery()
                 ->execute();
         }
+        $recipesPaginator = new RecipesPaginator($page, $qb);
+        $paginatedResults = $recipesPaginator->getPaginatedResult();
+        return $paginatedResults;
+    }
+
+    /**
+     * Search
+     *
+     * @param int $page
+     * @return array
+     */
+    public function getAllByPage($filter, $page = 1) {
+
+        $qb = $this->getEntityManager()->createQueryBuilder();
+
+        $qb->select('re')
+            ->from(RecipesEntity::class, 're');
+        $query = $qb->where("re.{$filter['field']} = :field")->setParameter('field', $filter['value'])
+            ->getQuery()
+            ->execute();
         $recipesPaginator = new RecipesPaginator($page, $qb);
         $paginatedResults = $recipesPaginator->getPaginatedResult();
         return $paginatedResults;
