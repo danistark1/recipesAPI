@@ -201,8 +201,10 @@ class RecipesController extends AbstractController {
         $recipesSelectedName = [];
         $counter = 0;
         $shouldSendRecipeSelectorEmail = $this->config->getConfigKey('send-recipe-selector-email');
+        // # of recipes to randomly select.
+        $numRecipesSend = $this->config->getConfigKey('send-recipe-selector-counter');
 
-        while($counter <= $totalRecipesCounter && $recipesFoundCounter < 2) {
+        while($counter <= $totalRecipesCounter && $recipesFoundCounter < $numRecipesSend) {
             // Selected recipe has already been saved in recipesselectorentity OR all recipes have already been selected.
             $allRecipesSelected = $totalRecipesSelectorCounter === $totalRecipesCounter;
             // All recipes have already been selected, reset table...
