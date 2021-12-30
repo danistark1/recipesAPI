@@ -178,6 +178,18 @@ class RecipesController extends AbstractController {
     }
 
     /**
+     * Get categories dropdown options
+     *
+     * @Route("/recipes/categories-dropdown", methods={"GET", "OPTIONS"}, name="get_categories_dropdown")
+     */
+    public function getCategoryDropDown(): Response
+    {
+        $content = $this->serializer->serialize(self::$categories, 'json');
+        $this->response->setContent($content);
+        return $this->response;
+    }
+
+    /**
      * Random recipe Selector
      * Randomly select from available recipes of type "Main Dish"
      * If a recipe has already been selected (recipeSelectorEntity table), it does not get selected again, unless all
