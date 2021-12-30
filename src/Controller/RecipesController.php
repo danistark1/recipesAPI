@@ -18,6 +18,7 @@ use App\Repository\RecipesSelectorRepository;
 use App\Repository\RecipesTagsRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Monolog\Logger;
+use Psr\Cache\InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -25,6 +26,7 @@ use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Exception;
 use Symfony\Component\Serializer\Serializer;
@@ -38,6 +40,9 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 /**
  * Class RecipesController
@@ -189,44 +194,49 @@ class RecipesController extends AbstractController {
         // this is just for FE to display the randomly selected recipes
         // TODO chron to send an email of the selected recipe.. configured data..
         // TODO Parse # out of directions && ingredients before sending to twig
-        $results = $this->recipesRepository->findByQuery(['category' => self::CATEGORY_MAIN_DISH]);
-        $totalRecipesCounter = count($results);
+        $recipes = $this->recipesRepository->findByQuery(['category' => self::CATEGORY_MAIN_DISH]);
+        $totalRecipesCounter = count($recipes);
         $totalRecipesSelectorCounter = 0;
+        $recipesFoundCounter = 0;
+        $recipesSelectedName = [];
         $counter = 0;
-        $recipeIDSaved = false;
         $shouldSendRecipeSelectorEmail = $this->config->getConfigKey('send-recipe-selector-email');
 
-        while($counter <= $totalRecipesCounter) {
+        while($counter <= $totalRecipesCounter && $recipesFoundCounter < 2) {
             // Selected recipe has already been saved in recipesselectorentity OR all recipes have already been selected.
             $allRecipesSelected = $totalRecipesSelectorCounter === $totalRecipesCounter;
             // All recipes have already been selected, reset table...
             if ($allRecipesSelected) {
+                $counter = 0;
+                $recipesFoundCounter = 0;
                 $this->recipesSelectorRepository->delete();
             }
             // TODO: Do not select a recipe if it has already been selected at least 2 weeks ago.
-            if ($recipeIDSaved) {
-               break;
-            }
-            if (empty($results)) {
+
+            if (empty($recipes)) {
                 $this->response->setContent("No recipes available!");
                 return $this->response;
             }
 
-            $recipeSelectedId = [];
-            /** @var RecipesEntity $result */
-            foreach($results as $result) {
-                $recipeSelectedId[] = $result->getId();
+            $allRecipesIds = [];
+            // Get an array of all available recipes previously selected.
+            /** @var RecipesEntity $recipe */
+            foreach($recipes as $recipe) {
+                $allRecipesIds[] = $recipe->getId();
             }
-            $randId = array_rand($recipeSelectedId,1);
-            $selectedRandId = $recipeSelectedId[$randId];
-            $result = $this->recipesRepository->findOneBy(['id' => $selectedRandId]);
-            $selectedName = $result->getName();
+            // TODO # of selected recipes should be a config.
+            $randId = array_rand($allRecipesIds,1);
+            $selectedRandId = $allRecipesIds[$randId];
+            $selectedRecipe = $this->recipesRepository->findOneBy(['id' => $selectedRandId]);
+
+            $selectedName = $selectedRecipe->getName();
+
             // Random recipe selected.
-            if ($selectedName !== '' && $selectedName !== null) {
+            if ($selectedRecipe !== '' && $selectedRecipe !== null) {
                 $totalRecipesSelectorCounter++;
                 // has this name been selected before?
                 // -- if selected before, find another recipe
-                $previouslySelectedRecipe = $this->recipesSelectorRepository->findByQuery(['recipeId' => $result->getId()]);
+                $previouslySelectedRecipe = $this->recipesSelectorRepository->findByQuery(['recipeId' => $selectedRecipe->getId()]);
                 if ($previouslySelectedRecipe) {
                     $selectedName = '';
                     $counter++;
@@ -236,37 +246,49 @@ class RecipesController extends AbstractController {
                 // Store randomly selected recipe in recipeselector
                 $recipeSelectorData = [
                     'name' => $selectedName,
-                    'recipeId' => $result->getId()];
-                $recipeIDSaved = $this->recipesSelectorRepository->save($recipeSelectorData);
-                // Send Email, if config 'send-recipe-selector-email' is set to 1
-                // && this is not an FE request to randomly select a recipe.
+                    'recipeId' => $selectedRecipe->getId()];
+                $recipesSelectedName[] = $selectedRecipe->getName();
+                $recipesFoundCounter++;
 
-                $directions = $this->parseRecipeData($result->getDirections());
-                $ingredients = $this->parseRecipeData($result->getIngredients());
-                if ($shouldSendRecipeSelectorEmail == 1 && !$feRequest) {
-                    $recipeData = [
-                        'recipeName'        => $selectedName,
-                        'recipeDirections'  => $directions,
-                        'recipeIngredients' => $ingredients,
-                        'recipeLink'        => $result->getUrl()];
-                    $message = (new Email())
-                        ->subject('Your weekly Recipe is here!')
-                        ->from($this->config->getConfigKey('email-from'))
-                        ->to($this->config->getConfigKey('email-to'))
-                        ->html(
-                            $this->templating->render(
-                                'email/recipe_selector.html.twig',
-                                $recipeData
-                            ),
-                            'text/html'
-                        );
-                    $this->mailer->send($message);
-                }
             }
             $counter++;
         }
+        // Send Email, if config 'send-recipe-selector-email' is set to 1
+        // && this is not an FE request to randomly select a recipe.
+        if ($shouldSendRecipeSelectorEmail && !$feRequest) {
+            $this->sendRecipeSelectorEmail($recipesSelectedName);
+        }
         $this->response->setContent(empty($selectedName) ?  'No recipes found, table could be empty.' : $selectedName);
         return $this->response;
+    }
+
+    /**
+     * Send selected recipe email.
+     *
+     * @param array  $recipesSelectedName
+     * @throws InvalidArgumentException
+     * @throws TransportExceptionInterface
+     * @throws LoaderError
+     * @throws RuntimeError
+     * @throws SyntaxError
+     */
+    private function sendRecipeSelectorEmail($recipesSelectedName) {
+        $recipeData = [
+            'recipe1Name'        => $recipesSelectedName[0],
+            'recipe2Name'        => $recipesSelectedName[1]
+        ];
+        $message = (new Email())
+            ->subject('Your weekly Selected Recipes are here!')
+            ->from($this->config->getConfigKey('email-from'))
+            ->to($this->config->getConfigKey('email-to'))
+            ->html(
+                $this->templating->render(
+                    'email/recipe_selector.html.twig',
+                    $recipeData
+                ),
+                'text/html'
+            );
+        $this->mailer->send($message);
     }
 
     /**
@@ -952,7 +974,7 @@ class RecipesController extends AbstractController {
      *
      * @Route("recipes/upload/{id}",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
      * @return Response
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function postFile(
         $id,
@@ -1026,7 +1048,7 @@ class RecipesController extends AbstractController {
      * @param Request $request
      * @param RecipesCacheHandler $config
      * @return bool
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     private function validateFileRequest(Request $request, RecipesCacheHandler $config, $id): bool {
         $valid = true;

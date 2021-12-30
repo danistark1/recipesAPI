@@ -9,18 +9,10 @@
 <body>
 {% block body %}
 <h3>Selected Recipe </h3>
-<h1>Recipe Name</h1>
-{{ recipeName }}
-<h1>Recipe Ingredients</h1>
-{% for recipeIngredient in recipeIngredients%}
-{{ recipeIngredient }}
-{% endfor %}
-<h1>Recipe Directions</h1>
-{% for recipeDirection in recipeDirection%}
-    {{ recipeDirection }}
-{% endfor %}
-<h1>Recipe Link</h1>
-{{ recipeLink }}
+<h1>Recipe 1 Name</h1>
+{{ recipe1Name }}
+<h1>Recipe 2 Name</h1>
+{{ recipe2Name }}
 </body>
 {% endblock %}
 </html>
