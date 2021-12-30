@@ -811,9 +811,13 @@ class RecipesController extends AbstractController {
      */
     private function isRateLimited(Request $request, RateLimiterFactory $anonymousApiLimiter, RecipesCacheHandler $config): bool {
         $isRateLimited = false;
+        $shouldRateLimit = $config->getConfigKey('should-rate-limit') ?? false;
+        if (!$shouldRateLimit) {
+            return $isRateLimited;
+        }
         // create a limiter based on a unique identifier of the client
         // (e.g. the client's IP address, a username/email, an API key, etc.)
-        $limiter = $anonymousApiLimiter->create($request->getClientIp(), $config);
+        $limiter = $anonymousApiLimiter->create($request->getClientIp());
         // the argument of consume() is the number of tokens to consume
         // and returns an object of type Limit
         if (false === $limiter->consume(1)->isAccepted()) {
