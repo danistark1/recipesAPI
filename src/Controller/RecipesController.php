@@ -262,8 +262,8 @@ class RecipesController extends AbstractController {
                     'name' => $selectedName,
                     'recipeId' => $selectedRecipe->getId()];
                 $recipesSelectedName[] = $selectedRecipe->getName();
+                $this->recipesSelectorRepository->save($recipeSelectorData);
                 $recipesFoundCounter++;
-
             }
             $counter++;
         }
@@ -592,30 +592,26 @@ class RecipesController extends AbstractController {
             }
             $value = $request->query->get('value');
         }
-       // $valid = true;
-    //    if ($valid) {
-            $filter = [];
-            if (!empty($field) && !empty($value)) {
-                $filter =  ['field' => $field, 'value' => $value];
+
+        $filter = [];
+        if (!empty($field) && !empty($value)) {
+            $filter =  ['field' => $field, 'value' => $value];
+        }
+        $resultsAll = $this->recipesRepository->getAllByPage($filter, $page) ?? [];
+        $results = $resultsAll['results'] ?? [];
+        $pagesCount = $resultsAll['pagesCount'] ?? 0;
+        $totalItems = $resultsAll['totalItems'] ?? 0;
+        if (!empty($results)) {
+            foreach($results as $result) {
+                $this->getFileInternal($result);
             }
-            $resultsAll = $this->recipesRepository->getAllByPage($filter, $page) ?? [];
-            $results = $resultsAll['results'] ?? [];
-            $pagesCount = $resultsAll['pagesCount'] ?? 0;
-            $totalItems = $resultsAll['totalItems'] ?? 0;
-            if (!empty($results)) {
-                foreach($results as $result) {
-                    $this->getFileInternal($result);
-                }
-                $this->normalize($results, $parsed);
-                $this->response->headers->set('recipes-totalItems', $totalItems);
-                $this->response->headers->set('recipes-pagesCount', $pagesCount);
-            }
-            $this->validateResponse($results);
-            $this->updateResponseHeader();
-//        } else {
-//            $this->response->setStatusCode(self::STATUS_VALIDATION_FAILED);
-//        }
-        return $this->response;
+            $this->normalize($results, $parsed);
+            $this->response->headers->set('recipes-totalItems', $totalItems);
+            $this->response->headers->set('recipes-pagesCount', $pagesCount);
+        }
+        $this->validateResponse($results);
+        $this->updateResponseHeader();
+    return $this->response;
     }
 
     /**
@@ -632,7 +628,6 @@ class RecipesController extends AbstractController {
         RateLimiterFactory $anonymousApiLimiter,
         RecipesCacheHandler $config
     ): Response {
-
         $isRateLimited = $this->isRateLimited($request, $anonymousApiLimiter, $config);
         if ($isRateLimited) {
             return $this->response;
