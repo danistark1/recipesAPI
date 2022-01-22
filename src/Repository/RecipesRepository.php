@@ -263,8 +263,11 @@ class RecipesRepository extends ServiceEntityRepository {
 
         $qb->select('re')
             ->from(RecipesEntity::class, 're');
-        $query = $qb->where("re.{$filter['field']} = :field")->setParameter('field', $filter['value'])
-            ->getQuery()
+        if (!empty($filter)) {
+            $qb->where("re.{$filter['field']} = :field")->setParameter('field', $filter['value']);
+        }
+
+            $qb->getQuery()
             ->execute();
         $recipesPaginator = new RecipesPaginator($page, $qb);
         $paginatedResults = $recipesPaginator->getPaginatedResult();
