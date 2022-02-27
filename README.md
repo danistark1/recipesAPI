@@ -1,6 +1,6 @@
 
 API endpoints for Recipe Manager project by https://github.com/PascaleStark
-
+Test server php -S localhost:8000 -t public/
 # APIs
 
 
