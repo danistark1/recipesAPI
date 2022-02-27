@@ -202,9 +202,7 @@ class RecipesController extends AbstractController {
         // FE doesn't need to send and email for randomly selected recipes, just display recipes in a label.
         $feRequest  = $request->get('fe-selector') ?? false;
 
-        // TODO add a param in the request (from FE) that when available in the request, no email needs to be sent,
         // this is just for FE to display the randomly selected recipes
-        // TODO chron to send an email of the selected recipe.. configured data..
         // TODO Parse # out of directions && ingredients before sending to twig
         $recipes = $this->recipesRepository->findByQuery(['category' => self::CATEGORY_MAIN_DISH]);
         $totalRecipesCounter = count($recipes);
@@ -215,6 +213,9 @@ class RecipesController extends AbstractController {
         $shouldSendRecipeSelectorEmail = $this->config->getConfigKey('send-recipe-selector-email');
         // # of recipes to randomly select.
         $numRecipesSend = $this->config->getConfigKey('send-recipe-selector-counter');
+        // To check if a randomly selected recipes do not have the same sub-categories
+        $recipesSelectedSubCategory = [];
+        $recipeSelectorNames = [];
 
         while($counter <= $totalRecipesCounter && $recipesFoundCounter < $numRecipesSend) {
             // Selected recipe has already been saved in recipesselectorentity OR all recipes have already been selected.
@@ -252,6 +253,7 @@ class RecipesController extends AbstractController {
                 // -- if selected before, find another recipe
                 $previouslySelectedRecipe = $this->recipesSelectorRepository->findByQuery(['recipeId' => $selectedRecipe->getId()]);
                 if ($previouslySelectedRecipe) {
+                   var_dump("here");
                     $selectedName = '';
                     $counter++;
                     continue;
@@ -260,8 +262,27 @@ class RecipesController extends AbstractController {
                 // Store randomly selected recipe in recipeselector
                 $recipeSelectorData = [
                     'name' => $selectedName,
-                    'recipeId' => $selectedRecipe->getId()];
+                    'recipeId' => $selectedRecipe->getId()
+                ];
+
+                // If sub-category already selected, skip
+                // We don't want to select more than 1 dish with the sub-category (pasta & pasta should be skipped)
+//                chicken
+//                pasta
+//                meat
+//                grain
+//                dough
+//                vegetables
+//                rice
+//                fish
+
+                if ($recipesSelectedSubCategory && in_array($selectedRecipe->getSubCategory(), $recipesSelectedSubCategory)) {
+                    continue;
+                }
                 $recipesSelectedName[] = $selectedRecipe->getName();
+                // Get recipe sub-category (ex. category Main Dish, subcategory = pasta)
+                $recipesSelectedSubCategory[] = $selectedRecipe->getSubCategory();
+                $recipeSelectorNames[] = $selectedName;
                 $this->recipesSelectorRepository->save($recipeSelectorData);
                 $recipesFoundCounter++;
             }
@@ -272,7 +293,7 @@ class RecipesController extends AbstractController {
         if ($shouldSendRecipeSelectorEmail && !$feRequest) {
             $this->sendRecipeSelectorEmail($recipesSelectedName);
         }
-        $this->response->setContent(empty($selectedName) ?  'No recipes found, table could be empty.' : $selectedName);
+        $this->response->setContent(empty($selectedName) ?  'No recipes found, table could be empty.' : implode("," , $recipeSelectorNames));
         return $this->response;
     }
 
