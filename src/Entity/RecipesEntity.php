@@ -99,6 +99,11 @@ class RecipesEntity {
      */
     private $recipesTags;
 
+    /**
+     * @ORM\Column(type="string", length=100, name="subCategory", nullable=true)
+     */
+    private $subCategory;
+
     public function __construct()
     {
         $this->recipesTags = new ArrayCollection();
@@ -315,6 +320,18 @@ class RecipesEntity {
                 $recipesTag->setRecipe(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getSubCategory(): ?string
+    {
+        return $this->subCategory;
+    }
+
+    public function setSubCategory(?string $subCategory): self
+    {
+        $this->subCategory = $subCategory;
 
         return $this;
     }
