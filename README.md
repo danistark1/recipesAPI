@@ -15,6 +15,7 @@ Test server php -S localhost:8000 -t public/
 | POST recipes/upload/{id} |   | post a recipe media file |
 | POST /recipes |   | Post a recipe |
 | DELETE recipes/delete/{id} |   | Delete a recipe|
+| DELETE recipes/config/deletecache |   | Clear config cache|
 | PATCH recipes/favourites/{id}} |   | Set a recipe as favourite |
 | PATCH recipes/featured/{id} |   | Set a recipe as featured |
 | PATCH recipes/update/{id} |   | Update a recipe field |
