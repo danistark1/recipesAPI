@@ -1,0 +1,2 @@
+-- Initial database setup for RecipesAPI
+-- This file is automatically executed when the MySQL container starts
