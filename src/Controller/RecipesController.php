@@ -167,7 +167,7 @@ class RecipesController extends AbstractController {
     /**
      * Get all recipes.
      * 
-    * @Route("/api/recipes", methods={"GET", "OPTIONS"}, name="get_all_recipies")
+    * @Route("/", methods={"GET", "OPTIONS"}, name="get_all_recipies")
      */
     public function index(): Response {
         //TODO Paginate.
@@ -180,7 +180,7 @@ class RecipesController extends AbstractController {
     /**
      * Get categories dropdown options
      *
-    * @Route("/api/recipes/categories-dropdown", methods={"GET", "OPTIONS"}, name="get_categories_dropdown")
+    * @Route("/categories-dropdown", methods={"GET", "OPTIONS"}, name="get_categories_dropdown")
      */
     public function getCategoryDropDown(): Response
     {
@@ -195,7 +195,7 @@ class RecipesController extends AbstractController {
      * If a recipe has already been selected (recipeSelectorEntity table), it does not get selected again, unless all
      * other recipes have been selected. Once all recipes are selected, the table gets erased, and we start all over.
      *
-    * @Route("/api/recipes/selector", methods={"GET"}, name="get_random_recipes")
+    * @Route("/selector", methods={"GET"}, name="get_random_recipes")
      */
     public function randomRecipeSelector(Request $request): Response
     {
@@ -342,7 +342,7 @@ class RecipesController extends AbstractController {
      * @param string $name Recipe name
      * @param Request $request
      * @return Response
-    * @Route("/api/recipes/name/{name}", methods={"GET"}, name="get_by_name")
+    * @Route("/name/{name}", methods={"GET"}, name="get_by_name")
      */
     public function getByName(
         Request $request,
@@ -373,7 +373,7 @@ class RecipesController extends AbstractController {
     /**
      * Post a category.
      *
-    * @Route("/api/recipes/category",  methods={"POST", "OPTIONS"}, name="post_category")
+    * @Route("/category",  methods={"POST", "OPTIONS"}, name="post_category")
      * @param Request $request
      * @return Response
      * @throws Exception
@@ -440,7 +440,7 @@ class RecipesController extends AbstractController {
     /**
      * Delete a recipes.
      *
-    * @Route("/api/recipes/delete/{id}", methods={"DELETE"}, requirements={"id"="\d+"}, name="delete_recipe")
+    * @Route("/delete/{id}", methods={"DELETE"}, requirements={"id"="\d+"}, name="delete_recipe")
      * @param $id
      * @return Response
      * @throws \Doctrine\ORM\ORMException
@@ -474,7 +474,7 @@ class RecipesController extends AbstractController {
     /**
      * Toggle favourites.
      *
-    * @Route("/api/recipes/favourites/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe_favourites")
+    * @Route("/favourites/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe_favourites")
      * @param $id
      * @param Request $request
      * @return Response
@@ -505,7 +505,7 @@ class RecipesController extends AbstractController {
     /**
      * Toggle featured.
      *
-    * @Route("/api/recipes/featured/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe_featured")
+    * @Route("/featured/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe_featured")
      * @param $id
      * @param Request $request
      * @return Response
@@ -540,7 +540,7 @@ class RecipesController extends AbstractController {
      *
      * @param Request $request
      * @return Response
-    * @Route("/api/recipes/where", methods={"GET", "OPTIONS", "HEAD"}, name="get_where")
+    * @Route("/where", methods={"GET", "OPTIONS", "HEAD"}, name="get_where")
      */
     public function getWhere(
         Request $request,
@@ -589,7 +589,7 @@ class RecipesController extends AbstractController {
      * Get all recipes filtered by category
      *
      * @param Request $request
-    * @Route("/api/recipes/all", methods={"GET", "OPTIONS", "HEAD"}, name="get_all")
+    * @Route("/all", methods={"GET", "OPTIONS", "HEAD"}, name="get_all")
      */
     public function getAllRecipes(
         Request $request,
@@ -642,7 +642,7 @@ class RecipesController extends AbstractController {
      *
      * @param Request $request
      * @return Response
-    * @Route("/api/recipes/search", methods={"GET", "OPTIONS", "HEAD"}, name="get_search")
+    * @Route("/search", methods={"GET", "OPTIONS", "HEAD"}, name="get_search")
      */
     public function getSearchPager(
         Request $request,
@@ -722,7 +722,7 @@ class RecipesController extends AbstractController {
      *
      * @param $id
      * @param Request $request
-    * @Route("/api/recipes/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
+    * @Route("/file/{id}",  methods={"GET", "OPTIONS"}, name="get_recipes_image")
      */
     public function getFile(
         $id,
@@ -860,7 +860,7 @@ class RecipesController extends AbstractController {
     /**
      * Post a recipe.
      *
-    * @Route("/api/recipes",  methods={"POST", "OPTIONS"}, name="post_recipes")
+    * @Route("/",  methods={"POST", "OPTIONS"}, name="post_recipes")
      * @param Request $request
      * @return Response
      * @throws Exception
@@ -917,7 +917,7 @@ class RecipesController extends AbstractController {
     /**
      * Update a recipe.
      *
-    * @Route("/api/recipes/update/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe")
+    * @Route("/update/{id}", methods={"PATCH", "OPTIONS"}, name="update_recipe")
      * @param $id
      * @param Request $request
      * @return Response
@@ -1006,7 +1006,7 @@ class RecipesController extends AbstractController {
      *
      * $id The ID of the foreign record you are attaching media to.
      *
-    * @Route("/api/recipes/upload/{id}",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
+    * @Route("/upload/{id}",  methods={"POST", "OPTIONS"}, name="upload_recipes_image")
      * @return Response
      * @throws InvalidArgumentException
      */
