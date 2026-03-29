@@ -709,7 +709,7 @@ class RecipesController extends AbstractController {
         if (!empty($results)) {
             $results = $results[0];
             $name = $results->getName();
-            $url = $this->config->getConfigKey('image-url') ?? "http://192.168.4.13/recipesAPI/public/";
+            $url = $this->config->getConfigKey('image-url') ?? "http://192.168.4.13/recipes/api";
             $imageUrl = $url.$name;
             $result->setImageUrl($imageUrl);
         } else {
@@ -743,7 +743,7 @@ class RecipesController extends AbstractController {
         if (!empty($record)) {
             $results = $recipesMediaRepository->findByQuery(['foreignID' => $id])[0];
             $name = $results->getName();
-            $imageUrl = "http://192.168.4.13/recipesAPI/public/$name";
+            $imageUrl = "http://192.168.4.13/recipes/api/$name";
             $this->response->setContent($imageUrl);
         } else {
             $this->response->setContent("Record with id $id does not exist.");
